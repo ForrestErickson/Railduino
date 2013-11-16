@@ -29,7 +29,7 @@ void  setup()  {
   toggleLED();
   
   Serial.begin(9600);
-  if (VERBOSE)  {Serial.println("\r\nRailduino Setup Done");  }
+  if (VERBOSE)  {Serial.println("\r\n\fRailduino Setup Done");  }
 }
 
 
@@ -48,16 +48,72 @@ void  loop()  {
     inByte = Serial.read();  //Add next char to string.
     
       switch (inByte)  {
+
+        case 'f':
+        case 'F':
+        Serial.println("Set for Forward.") ;   
+        break;
+        
+        case 'r':
+        case 'R':
+        Serial.println("Set for Reverse.") ;   
+        break;
+        
+        case 'g':
+        case 'G':
+        Serial.println("Mortor is Go!") ;   
+        break;
+        
+        case 's':
+        case 'S':
+        Serial.println("Motor is Stoped.") ;   
+        break;
+        
+        case 't':
+        case 'T':
+        Serial.println("Set for rail travel Time.") ;   
+        break;
+        
+        case 'l':
+        case 'L':
+        Serial.println("Set travel for percent Length of rail.") ;   
+        break;
+
         case 'a':
-        Serial.println("You pressed an 'a'.") ;   
-        break;
         case 'A':
-        Serial.println("You pressed an 'A'.") ;   
+        Serial.println("Trigger camera Auto focus.") ;   
         break;
-        default:
-        Serial.println("You did not pressed an 'a'.");    
-        Serial.print("You pressed a ");    
-        Serial.println(char(inByte));    
+
+        case 'p':
+        case 'P':
+        Serial.println("Make Photo now.") ;   
+        break;
+
+        case 'i':
+        case 'I':
+        Serial.println("Set up for photo interval.") ;   
+        break;
+
+        case 'n':
+        case 'N':
+        Serial.println("Set for number of photos to make.") ;   
+        break;
+
+        case 'm':
+        case 'M':
+        case '\n':
+//        case '\r':
+        commandmenu();  
+        break;
+
+        case '\r':
+        break;
+
+       default:
+        Serial.println("You did not pressed a command I know.");    
+        Serial.print("You pressed a(n)--");    
+        Serial.print(char(inByte));    
+        Serial.println("--.");    
 
       }
   }
@@ -66,6 +122,25 @@ void  loop()  {
 }
 
 //Functions go here.
+
+//Command menu
+
+void commandmenu()  {
+  Serial.println("\fCommand Menu") ;
+  Serial.println("F for Forward."); 
+  Serial.println("R for Reverse."); 
+  Serial.println("G for motor and photos Go."); 
+  Serial.println("S for motor and photos Stop."); 
+  Serial.println("T to enter Time to travel rail."); 
+  Serial.println("L for percent Length of rail to travel"); 
+  Serial.println("A to trigger Auto Focus on camera."); 
+  Serial.println("P to make Photo now!"); 
+  Serial.println("I to set photo Interval."); 
+  Serial.println("N to set Number of photos during rail travel."); 
+  Serial.println(""); //Leave space after manu.
+    
+  }  
+
 
 //const int LED  = 13;  //Build in LED.
 int valLED = LOW;  // variable to store LED state
