@@ -17,7 +17,7 @@
 //Constants
 const  int LED = 13;  // The Arduino LED.  Also LED IN4 on the motor shield.
 const  int VERBOSE = 1; //User VEBRBOSE for development
-
+const  int  HEARTBEAT = 1000;  //Period of heart beat in milliseconds
 //Initiliaze Hardware
 
 void  setup()  {
@@ -32,17 +32,25 @@ void  setup()  {
   if (VERBOSE)  {Serial.println("\r\n\fRailduino Setup Done");  }
 }
 
+//unsigned long lastchange = millis();
+unsigned long lastchange = 0;
 
 void  loop()  {
+
   //Heart Beat
-  //delay(500);
-  //toggleLED();
+  if (HEARTBEAT/2 < (millis()-lastchange)){
+    toggleLED();
+    lastchange = millis();
+  }
+ 
+
 //  if (VERBOSE)  {Serial.println("Toggle LED"); }
 
   int  inByte;
 //  char  serial;
 //  String  serial;
   
+//  if (0) {
   if (Serial.available() >0) {
     //Serial.println(Serial.read());  //Echo it.
     inByte = Serial.read();  //Add next char to string.
@@ -110,23 +118,20 @@ void  loop()  {
         break;
 
        default:
-        Serial.println("You did not pressed a command I know.");    
+        Serial.println("Sorry, you did not pressed a command I know.");    
         Serial.print("You pressed a(n)--");    
         Serial.print(char(inByte));    
         Serial.println("--.");    
 
       }
   }
-    
-    toggleLED();
 }
 
 //Functions go here.
 
-//Command menu
-
+//Command menu for Railduino
 void commandmenu()  {
-  Serial.println("\fCommand Menu") ;
+  Serial.println("\fRailduino Command Menu") ;
   Serial.println("F for Forward."); 
   Serial.println("R for Reverse."); 
   Serial.println("G for motor and photos Go."); 
@@ -138,7 +143,6 @@ void commandmenu()  {
   Serial.println("I to set photo Interval."); 
   Serial.println("N to set Number of photos during rail travel."); 
   Serial.println(""); //Leave space after manu.
-    
   }  
 
 
