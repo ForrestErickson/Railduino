@@ -18,8 +18,22 @@
 const  int LED = 13;  // The Arduino LED.  Also LED IN4 on the motor shield.
 const  int VERBOSE = 1; //User VEBRBOSE for development
 const  int  HEARTBEAT = 1000;  //Period of heart beat in milliseconds
-//Initiliaze Hardware
 
+
+//Motor Setup
+const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
+
+//Rail Setup
+const int  THREADS_PER_INCH = 20;  //on 1/4x20 all thread.
+const int  LENGTH_OF_TRAVEL = 1; //Inches 
+const int  MAX_REVOLUSTIONS = LENGTH_OF_TRAVEL * THREADS_PER_INCH;
+const int  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
+
+// initialize the stepper library on pins 8 through 11:
+Stepper myStepper(stepsPerRevolution, 8,11,12,13);           
+int advance = -1;  //Direction of stepper is counter clockwise to push trolly.
+
+//Initiliaze Hardware
 void  setup()  {
   pinMode(LED, OUTPUT);
   digitalWrite(LED,HIGH);
@@ -27,9 +41,17 @@ void  setup()  {
   toggleLED();
   delay(50);
   toggleLED();
+
+ // set the speed in RMP and turn on pins to driver stepper shield.
+  myStepper.setSpeed(60);
+  pinMode(9,OUTPUT);
+  pinMode(10,OUTPUT);
+  digitalWrite(9,HIGH);
+  digitalWrite(10,HIGH);
   
   Serial.begin(9600);
   if (VERBOSE)  {Serial.println("\r\n\fRailduino Setup Done");  }
+  Serial.println (MAX_STEPS);
 }
 
 //unsigned long lastchange = millis();
@@ -40,35 +62,33 @@ void  loop()  {
   //Heart Beat
   if (HEARTBEAT/2 < (millis()-lastchange)){
     toggleLED();
+ //  if (VERBOSE)  {Serial.println("Toggle LED"); }
     lastchange = millis();
   }
- 
 
-//  if (VERBOSE)  {Serial.println("Toggle LED"); }
-
+  //User interface on serial port.
   int  inByte;
-//  char  serial;
-//  String  serial;
-  
 //  if (0) {
   if (Serial.available() >0) {
-    //Serial.println(Serial.read());  //Echo it.
     inByte = Serial.read();  //Add next char to string.
     
       switch (inByte)  {
 
         case 'f':
         case 'F':
+        advance = -1;
         Serial.println("Set for Forward.") ;   
         break;
         
         case 'r':
         case 'R':
+        advance = 1;
         Serial.println("Set for Reverse.") ;   
         break;
         
         case 'g':
         case 'G':
+        go();
         Serial.println("Mortor is Go!") ;   
         break;
         
@@ -107,14 +127,13 @@ void  loop()  {
         Serial.println("Set for number of photos to make.") ;   
         break;
 
-        case 'm':
+        case 'm':  //M or m or NL prints menu.
         case 'M':
         case '\n':
-//        case '\r':
         commandmenu();  
         break;
 
-        case '\r':
+        case '\r':  //Swallow CR.
         break;
 
        default:
@@ -128,6 +147,27 @@ void  loop()  {
 }
 
 //Functions go here.
+
+//Motor turn and go back.
+// MAX_REVOLUSTIONS takes us from one end to the other.
+// MAX_STEPS takes us from one end to the other.
+// A place holder for a real GO! function.
+void go()  {
+  if (advance) {
+    Serial.println("counter clockwise");
+  }  else Serial.println("clockwise");
+ 
+  myStepper.step(advance*MAX_STEPS);
+  toggleLED();
+  delay(500);
+  if (advance) {
+    Serial.println("clockwise");
+  }  else Serial.println("counter clockwise");
+  myStepper.step(-1*advance*MAX_STEPS);
+  delay(500);
+}
+
+
 
 //Command menu for Railduino
 void commandmenu()  {
@@ -146,10 +186,11 @@ void commandmenu()  {
   }  
 
 
-//const int LED  = 13;  //Build in LED.
+//Toggle the LED on pin 13 for user feedback.
 int valLED = LOW;  // variable to store LED state
 
 void toggleLED()  {
+  return;
   if (valLED == HIGH){
     digitalWrite(LED, LOW);
     valLED = LOW;
