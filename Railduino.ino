@@ -43,7 +43,7 @@ void  setup()  {
   toggleLED();
 
  // set the speed in RMP and turn on pins to driver stepper shield.
-  myStepper.setSpeed(60);
+  myStepper.setSpeed(180);
   pinMode(9,OUTPUT);
   pinMode(10,OUTPUT);
   digitalWrite(9,HIGH);
@@ -51,7 +51,7 @@ void  setup()  {
   
   Serial.begin(9600);
   if (VERBOSE)  {Serial.println("\r\n\fRailduino Setup Done");  }
-  Serial.println (MAX_STEPS);
+//  Serial.println (MAX_STEPS);
 }
 
 //unsigned long lastchange = millis();
@@ -84,6 +84,19 @@ void  loop()  {
         case 'R':
         advance = 1;
         Serial.println("Set for Reverse.") ;   
+        break;
+        
+        case 'b':
+        case 'B':
+        Serial.println("Bump motor a step") ;  
+        myStepper.step(advance*1);  //One step advance
+        break;
+        
+        //Home the trolly by returning untill limit switch closes.
+        case 'h':
+        case 'H':
+        Serial.println("Heading for Home.") ;  
+        myStepper.step(1);  //TEMP One step back
         break;
         
         case 'g':
@@ -174,6 +187,8 @@ void commandmenu()  {
   Serial.println("\fRailduino Command Menu") ;
   Serial.println("F for Forward."); 
   Serial.println("R for Reverse."); 
+  Serial.println("B for Bump motor a step."); 
+  Serial.println("H for Home the trolly."); 
   Serial.println("G for motor and photos Go."); 
   Serial.println("S for motor and photos Stop."); 
   Serial.println("T to enter Time to travel rail."); 
@@ -190,7 +205,6 @@ void commandmenu()  {
 int valLED = LOW;  // variable to store LED state
 
 void toggleLED()  {
-  return;
   if (valLED == HIGH){
     digitalWrite(LED, LOW);
     valLED = LOW;
