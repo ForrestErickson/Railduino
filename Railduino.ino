@@ -13,6 +13,7 @@
 
 #include <Stepper.h>
 #include <String.h>  //Allows sting comparison.
+#include <stdlib.h>  //Allows atoi ASCII to Interger
 
 //Constants
 const  int LED = 13;  // The Arduino LED.  Also LED IN4 on the motor shield.
@@ -38,6 +39,10 @@ int  camera_exposure = 30;  //Seconds of exposure
 Stepper myStepper(stepsPerRevolution, 8,11,12,13);           
 int advance = -1;  //Direction of stepper is counter clockwise to push trolly.
 
+// Set serial port variables.  
+  String inputString = "";         // a string to hold incoming data
+  boolean stringComplete = false;  // whether the string is complete
+
 //Initiliaze Hardware
 void  setup()  {
   pinMode(LED, OUTPUT);
@@ -53,14 +58,19 @@ void  setup()  {
   pinMode(10,OUTPUT);
   digitalWrite(9,HIGH);
   digitalWrite(10,HIGH);
-  
+
   Serial.begin(9600);
   if (VERBOSE)  {Serial.println("\r\n\fRailduino Setup Done");  }
-//  Serial.println (MAX_STEPS);
-}
+  //  Serial.println (MAX_STEPS);
+  
+  // reserve 200 bytes for the inputString:
+  inputString.reserve(200);
 
-//unsigned long lastchange = millis();
-unsigned long lastchange = 0;
+  }
+
+  //unsigned long lastchange = millis();
+  unsigned long lastchange = 0;
+
 
 void  loop()  {
 
@@ -157,7 +167,21 @@ void  loop()  {
 
         case 'n':
         case 'N':
-        Serial.println("Set for number of photos to make.") ;   
+        Serial.println("Set for number of photos to make < 500.") ; 
+        //Get from user a number from 1 to 500   
+        while (stringComplete = false)  {
+           // get the new byte:
+            char inChar = (char)Serial.read();
+            // add it to the inputString:
+            inputString += inChar;
+            // if the incoming character is a newline, set a flag
+            // so the main loop can do something about it:
+            if (inChar == '\n') {
+            stringComplete = true;
+            }
+          }
+          Serial.println (inputString); 
+          inputString = "";
         break;
 
         case 'm':  //M or m or NL prints menu.
@@ -234,3 +258,22 @@ void toggleLED()  {
   }  
 }
 
+/*
+  SerialEvent occurs whenever a new data comes in the
+ hardware serial RX.  This routine is run between each
+ time loop() runs, so using delay inside loop can delay
+ response.  Multiple bytes of data may be available.
+ */
+void serialEvent() {
+  while (Serial.available()) {
+    // get the new byte:
+    char inChar = (char)Serial.read();
+    // add it to the inputString:
+    inputString += inChar;
+    // if the incoming character is a newline, set a flag
+    // so the main loop can do something about it:
+    if (inChar == '\n') {
+      stringComplete = true;
+    }
+  }
+}
