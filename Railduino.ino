@@ -28,6 +28,11 @@ const int  THREADS_PER_INCH = 20;  //on 1/4x20 all thread.
 const int  LENGTH_OF_TRAVEL = 1; //Inches 
 const int  MAX_REVOLUSTIONS = LENGTH_OF_TRAVEL * THREADS_PER_INCH;
 const int  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
+int  length_percent = 10;  //Percent of the total rail length to travel.
+
+//Camera Setup
+int camera_delay_interval = 30;  //Seconds between closing of shutter and next camera shot.
+int  camera_exposure = 30;  //Seconds of exposure
 
 // initialize the stepper library on pins 8 through 11:
 Stepper myStepper(stepsPerRevolution, 8,11,12,13);           
@@ -43,7 +48,7 @@ void  setup()  {
   toggleLED();
 
  // set the speed in RMP and turn on pins to driver stepper shield.
-  myStepper.setSpeed(180);
+  myStepper.setSpeed(240);
   pinMode(9,OUTPUT);
   pinMode(10,OUTPUT);
   digitalWrite(9,HIGH);
@@ -102,12 +107,12 @@ void  loop()  {
         case 'g':
         case 'G':
         go();
-        Serial.println("Mortor is Go!") ;   
+        Serial.println("Motor is Go!") ;   
         break;
         
         case 's':
         case 'S':
-        Serial.println("Motor is Stoped.") ;   
+        Serial.println("Motor is Stopped.") ;   
         break;
         
         case 't':
@@ -115,9 +120,24 @@ void  loop()  {
         Serial.println("Set for rail travel Time.") ;   
         break;
         
-        case 'l':
         case 'L':
-        Serial.println("Set travel for percent Length of rail.") ;   
+        length_percent = length_percent +10;
+        if (length_percent >100) {
+          length_percent = 100;
+        }
+        Serial.println("Set travel for ");
+        Serial.print (length_percent);
+        Serial.println(" % Length of rail.") ;
+        break;
+        
+        case 'l':
+        length_percent = length_percent - 10;
+        if (length_percent <10) {
+          length_percent = 10;
+        }        
+        Serial.println("Set travel for ");
+        Serial.print (length_percent);
+        Serial.println(" % Length of rail.") ;
         break;
 
         case 'a':
@@ -170,13 +190,13 @@ void go()  {
     Serial.println("counter clockwise");
   }  else Serial.println("clockwise");
  
-  myStepper.step(advance*MAX_STEPS);
+  myStepper.step(advance*MAX_STEPS*(length_percent/100.0));
   toggleLED();
   delay(500);
   if (advance) {
     Serial.println("clockwise");
   }  else Serial.println("counter clockwise");
-  myStepper.step(-1*advance*MAX_STEPS);
+  myStepper.step(-1*advance*MAX_STEPS*(length_percent/100.0));
   delay(500);
 }
 
@@ -192,7 +212,7 @@ void commandmenu()  {
   Serial.println("G for motor and photos Go."); 
   Serial.println("S for motor and photos Stop."); 
   Serial.println("T to enter Time to travel rail."); 
-  Serial.println("L for percent Length of rail to travel"); 
+  Serial.println("L/l increment or decrement percent Length of rail to travel"); 
   Serial.println("A to trigger Auto Focus on camera."); 
   Serial.println("P to make Photo now!"); 
   Serial.println("I to set photo Interval."); 
