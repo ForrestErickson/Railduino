@@ -11,18 +11,44 @@
   Drawings: 
 */
 
+/*
+Pin assignments
+  A0 - A5          NC
+  
+  D0  RX
+  D1  TX
+  D2  Int.0        NC
+  D3~ Int.1        NC
+  D4               NC
+  D5~              NC
+  D6~              /Focus    ?ring?
+  D7               /Shutter  ?tip?
+  D8               MOTOR CONTROL
+  D9~              NC
+  D10~             NC
+  D11~             MOTOR CONTROL
+  D12              MOTOR CONTROL
+  D13              MOTOR CONTROL
+*/
+
+
 #include <Stepper.h>
 #include <String.h>  //Allows sting comparison.
 #include <stdlib.h>  //Allows atoi ASCII to Interger
 
 //Constants
-const  int LED = 13;  // The Arduino LED.  Also LED IN4 on the motor shield.
-const  int VERBOSE = 1; //User VEBRBOSE for development
-const  int  HEARTBEAT = 1000;  //Period of heart beat in milliseconds
+const  int LED = 13;  // Pin assignement. The Arduino LED.  Also LED IN4 on the motor shield.
+const  int nFOCUS = 6;  // Pin assignment. Make low to trigger auto focus.
+const  int nSHUTTER = 7;  // Pin assignment. Make low to trigger open shutter.
 
+const  int VERBOSE = 1; //User VEBRBOSE for development
+const  int  HEARTBEAT = 1000;  //Period of heart beat in milliseconds used for LED.
+const  int  FOCUST_DELAY = 10;  //Delay from focust to shutter release.
 
 //Motor Setup
-const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
+//const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
+//const int stepsPerRevolution = int(360);  // Big Inch degree / step motor.
+const int stepsPerRevolution = int(360/1.5);  // Big Inch degree / step motor.
 
 //Rail Setup
 const int  THREADS_PER_INCH = 20;  //on 1/4x20 all thread.
@@ -34,6 +60,7 @@ int  length_percent = 10;  //Percent of the total rail length to travel.
 //Camera Setup
 int camera_delay_interval = 30;  //Seconds between closing of shutter and next camera shot.
 int  camera_exposure = 30;  //Seconds of exposure
+int  number_photos = 1;  //Default number of photos.
 
 // initialize the stepper library on pins 8 through 11:
 Stepper myStepper(stepsPerRevolution, 8,11,12,13);           
@@ -43,33 +70,38 @@ int advance = -1;  //Direction of stepper is counter clockwise to push trolly.
   String inputString = "";         // a string to hold incoming data
   boolean stringComplete = false;  // whether the string is complete
 
+  //unsigned long lastchange = millis();
+  unsigned long lastchange = 0;  //Time since LED last changed.
+
 //Initiliaze Hardware
 void  setup()  {
   pinMode(LED, OUTPUT);
   digitalWrite(LED,HIGH);
   delay(50);
   toggleLED();
+  pinMode(nFOCUS, INPUT);  //Set as input so high impedance.
+  pinMode(nSHUTTER, INPUT); // Set as input so high impedance.
   delay(50);
   toggleLED();
 
  // set the speed in RMP and turn on pins to driver stepper shield.
-  myStepper.setSpeed(240);
+  myStepper.setSpeed(24);
   pinMode(9,OUTPUT);
   pinMode(10,OUTPUT);
   digitalWrite(9,HIGH);
   digitalWrite(10,HIGH);
+  delay(50);
+  toggleLED();
 
   Serial.begin(9600);
   if (VERBOSE)  {Serial.println("\r\n\fRailduino Setup Done");  }
   //  Serial.println (MAX_STEPS);
+  delay(50);
+  toggleLED();
   
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
-
   }
-
-  //unsigned long lastchange = millis();
-  unsigned long lastchange = 0;
 
 
 void  loop()  {
@@ -116,18 +148,19 @@ void  loop()  {
         
         case 'g':
         case 'G':
-        go();
         Serial.println("Motor is Go!") ;   
+        go();
+        Serial.println("Motor is now stoped.") ;   
         break;
         
         case 's':
         case 'S':
-        Serial.println("Motor is Stopped.") ;   
+        Serial.println("This does nothing yet. Should be: Motor is Stopped.") ;   
         break;
         
         case 't':
         case 'T':
-        Serial.println("Set for rail travel Time.") ;   
+        Serial.println("This does nothing yet. Should be: Set for rail travel Time.") ;   
         break;
         
         case 'L':
@@ -152,12 +185,24 @@ void  loop()  {
 
         case 'a':
         case 'A':
-        Serial.println("Trigger camera Auto focus.") ;   
+        Serial.println("Trigger camera Auto focus.") ; 
+        digitalWrite(nFOCUS, LOW);
+        delay(10);
+        pinMode(nFOCUS, INPUT);
         break;
 
         case 'p':
         case 'P':
         Serial.println("Make Photo now.") ;   
+        // Trigger auto focus
+        digitalWrite(nFOCUS, LOW);
+        delay(FOCUST_DELAY);
+        pinMode(nFOCUS, INPUT);    //Make high impedance.
+        // Release shutter
+        digitalWrite(nSHUTTER, LOW);
+        delay(10);
+        pinMode(nSHUTTER, INPUT);  //Makd high impedance.
+        
         break;
 
         case 'i':
@@ -168,20 +213,9 @@ void  loop()  {
         case 'n':
         case 'N':
         Serial.println("Set for number of photos to make < 500.") ; 
-        //Get from user a number from 1 to 500   
-        while (stringComplete = false)  {
-           // get the new byte:
-            char inChar = (char)Serial.read();
-            // add it to the inputString:
-            inputString += inChar;
-            // if the incoming character is a newline, set a flag
-            // so the main loop can do something about it:
-            if (inChar == '\n') {
-            stringComplete = true;
-            }
-          }
-          Serial.println (inputString); 
-          inputString = "";
+        number_photos = get_number();
+        Serial.print ("Number = ");
+        Serial.println (number_photos);
         break;
 
         case 'm':  //M or m or NL prints menu.
@@ -258,14 +292,15 @@ void toggleLED()  {
   }  
 }
 
-/*
-  SerialEvent occurs whenever a new data comes in the
- hardware serial RX.  This routine is run between each
- time loop() runs, so using delay inside loop can delay
- response.  Multiple bytes of data may be available.
- */
-void serialEvent() {
-  while (Serial.available()) {
+
+
+/*get_number();
+Gets serial input and returns an interger limated to TBD
+
+*/
+int  get_number()  {
+  
+  while (stringComplete = false)  {
     // get the new byte:
     char inChar = (char)Serial.read();
     // add it to the inputString:
@@ -274,6 +309,12 @@ void serialEvent() {
     // so the main loop can do something about it:
     if (inChar == '\n') {
       stringComplete = true;
+      }
     }
-  }
+  Serial.println (inputString);
+  int number;
+//  number = atoi (inputString);
+  number = 3 ;
+  inputString = "";
+  return (number);
 }
