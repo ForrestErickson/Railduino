@@ -161,7 +161,7 @@ void  loop()  {
         
         case 't':
         case 'T':
-        Serial.println("This does nothing yet. Should be: Set for rail travel Time.") ;   
+        Serial.println("This does nothing yet. Should be: Reports Time for rail travel.") ;   
         break;
         
         case 'L':
@@ -183,6 +183,17 @@ void  loop()  {
         Serial.print (length_percent);
         Serial.println(" % Length of rail.") ;
         break;
+
+        case 'e':
+        case 'E':
+        Serial.println("Set Exposure time in seconds.") ; 
+        camera_exposure = serial_get_int();
+        Serial.print ("seconds of Exposture = ");
+        Serial.println (camera_exposure);
+
+        break;
+
+
 
         case 'a':
         case 'A':
@@ -208,14 +219,17 @@ void  loop()  {
         case 'i':
         case 'I':
         Serial.println("Set up for photo interval.") ;   
+        camera_delay_interval = serial_get_int ();
+        Serial.print ("seconds of camera delay Interval = ");
+        Serial.println (camera_delay_interval);
         break;
 
         case 'n':
         case 'N':
-        Serial.println("Set for number of photos to make < 500.") ; 
+        Serial.println("Set for number of photos to make < 3000.") ; 
 //        number_photos = get_number();
         number_photos = serial_get_int();
-        Serial.print ("Number = ");
+        Serial.print ("Number of photos = ");
         Serial.println (number_photos);
         break;
 
@@ -270,8 +284,9 @@ void commandmenu()  {
   Serial.println("H for Home the trolly."); 
   Serial.println("G for motor and photos Go."); 
   Serial.println("S for motor and photos Stop."); 
-  Serial.println("T to enter Time to travel rail."); 
+  Serial.println("T to report Time to travel rail."); 
   Serial.println("L/l increment or decrement percent Length of rail to travel"); 
+  Serial.println("E to set Exposure in seconds."); 
   Serial.println("A to trigger Auto Focus on camera."); 
   Serial.println("P to make Photo now!"); 
   Serial.println("I to set photo Interval."); 
