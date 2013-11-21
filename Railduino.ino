@@ -43,7 +43,7 @@ const  int nSHUTTER = 7;  // Pin assignment. Make low to trigger open shutter.
 
 const  int VERBOSE = 1; //User VEBRBOSE for development
 const  int  HEARTBEAT = 1000;  //Period of heart beat in milliseconds used for LED.
-const  int  FOCUST_DELAY = 10;  //Delay from focust to shutter release.
+const  int  FOCUS_DELAY = 10;  //mSec delay from focust to shutter release.
 
 //Motor Setup
 //const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
@@ -61,6 +61,7 @@ int  length_percent = 10;  //Percent of the total rail length to travel.
 int camera_delay_interval = 30;  //Seconds between closing of shutter and next camera shot.
 int  camera_exposure = 30;  //Seconds of exposure
 int  number_photos = 1;  //Default number of photos.
+//long  number_photos = 1;  //Default number of photos.
 
 // initialize the stepper library on pins 8 through 11:
 Stepper myStepper(stepsPerRevolution, 8,11,12,13);           
@@ -196,13 +197,12 @@ void  loop()  {
         Serial.println("Make Photo now.") ;   
         // Trigger auto focus
         digitalWrite(nFOCUS, LOW);
-        delay(FOCUST_DELAY);
+        delay(FOCUS_DELAY);
         pinMode(nFOCUS, INPUT);    //Make high impedance.
         // Release shutter
         digitalWrite(nSHUTTER, LOW);
         delay(10);
         pinMode(nSHUTTER, INPUT);  //Makd high impedance.
-        
         break;
 
         case 'i':
@@ -213,7 +213,8 @@ void  loop()  {
         case 'n':
         case 'N':
         Serial.println("Set for number of photos to make < 500.") ; 
-        number_photos = get_number();
+//        number_photos = get_number();
+        number_photos = serial_get_int();
         Serial.print ("Number = ");
         Serial.println (number_photos);
         break;
@@ -235,7 +236,7 @@ void  loop()  {
 
       }
   }
-}
+}  //End of loop()
 
 //Functions go here.
 
@@ -293,28 +294,20 @@ void toggleLED()  {
 }
 
 
-
-/*get_number();
-Gets serial input and returns an interger limated to TBD
-
-*/
-int  get_number()  {
-  
-  while (stringComplete = false)  {
-    // get the new byte:
-    char inChar = (char)Serial.read();
-    // add it to the inputString:
-    inputString += inChar;
-    // if the incoming character is a newline, set a flag
-    // so the main loop can do something about it:
-    if (inChar == '\n') {
-      stringComplete = true;
+//Get digit characters and combine as positive interger.
+int serial_get_int ()  
+{
+  char c = '0' ;
+  int  x = 0;
+  do
+  {
+    if (Serial.available()>0)  {
+      c= Serial.read(); 
+      Serial.print (c);  //Echo to user's terminal.
+      if ((c >= '0') && (c <= '9')) {
+        x= 10*x + (c-'0');
       }
-    }
-  Serial.println (inputString);
-  int number;
-//  number = atoi (inputString);
-  number = 3 ;
-  inputString = "";
-  return (number);
+     }
+  } while ( (c != '\n') && (x <= 3000) ); // int in x.
+  return (x);  // The number.
 }
