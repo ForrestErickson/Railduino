@@ -57,11 +57,13 @@ const int  MAX_REVOLUSTIONS = LENGTH_OF_TRAVEL * THREADS_PER_INCH;
 const int  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
 int  length_percent = 10;  //Percent of the total rail length to travel.
 
-//Camera Setup
-int camera_delay_interval = 30;  //Seconds between closing of shutter and next camera shot.
-int  camera_exposure = 30;  //Seconds of exposure
+//Camera Default Setup
+int camera_delay_interval = 5;  //Seconds between closing of shutter and next camera shot.
+int  camera_exposure = 3;  //Seconds of exposure
 int  number_photos = 1;  //Default number of photos.
-//long  number_photos = 1;  //Default number of photos.
+long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills.
+long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
+int  exposing  = 0;  //Nonzero for exposing.
 
 // initialize the stepper library on pins 8 through 11:
 Stepper myStepper(stepsPerRevolution, 8,11,12,13);           
@@ -95,7 +97,7 @@ void  setup()  {
   toggleLED();
 
   Serial.begin(9600);
-  if (VERBOSE)  {Serial.println("\r\n\fRailduino Setup Done");  }
+  if (VERBOSE)  {Serial.println("\r\n\fRailduino Version 20131125. Setup Done");  }
   //  Serial.println (MAX_STEPS);
   delay(50);
   toggleLED();
@@ -104,7 +106,7 @@ void  setup()  {
   inputString.reserve(200);
   }
 
-
+/* ------------------------  MAIN Loop -------------------------------------*/
 void  loop()  {
 
   //Heart Beat
@@ -114,6 +116,38 @@ void  loop()  {
     lastchange = millis();
   }
 
+//Check to stop exposing. 
+  if (exposing)  {
+    if (exposure_finish_time < millis())  {
+      // close shutter, ?set state variable?
+      digitalWrite(nSHUTTER,HIGH); // 
+      number_photos = number_photos -1;  //Decrement number of photo remaining.
+      if (number_photos < 1)  {
+        exposing = 0;  //Clear the state variable.        
+      }
+      if (VERBOSE)  Serial.print("Shutter closed at: ");
+      if (VERBOSE)  Serial.println(exposure_finish_time);
+      //Next esposure starts at camera_delay_interval + exposure_finish_time
+      next_exposure_starts = camera_delay_interval + exposure_finish_time;
+      Serial.print("Number of photos remaining: ");
+      Serial.println(number_photos);
+      if (VERBOSE)  Serial.print("Next exposure at: ");
+      if (VERBOSE)  Serial.println(next_exposure_starts);            
+    }
+    if ((number_photos >0) && (next_exposure_starts > millis()))  {
+      // Set new esposure finish time and Open shutter shutter, 
+      exposure_finish_time = (millis() + 1000*camera_exposure);
+      if (VERBOSE)  Serial.print ("Exposing now at:");
+      if (VERBOSE)  Serial.print (millis());
+      if (VERBOSE)  Serial.print (". Finish will be time: ");
+      if (VERBOSE)  Serial.println (exposure_finish_time);
+      digitalWrite(nSHUTTER,LOW); // Open shutter
+      exposing = 1;  //Set the state variable.
+    }
+      
+  }
+  
+  
   //User interface on serial port.
   int  inByte;
 //  if (0) {
@@ -134,6 +168,13 @@ void  loop()  {
         Serial.println("Set for Reverse.") ;   
         break;
         
+        case 'w':
+        case 'W':
+        Serial.println("Motor is Waving!") ;   
+        wave();  //The old go() function. Usefull for testing.
+        Serial.println("Waving has now stoped.") ;   
+        break;
+ 
         case 'b':
         case 'B':
         Serial.println("Bump motor a step") ;  
@@ -185,15 +226,18 @@ void  loop()  {
         break;
 
         case 'e':
-        case 'E':
+        case 'E':\
+        /* NON Blocking exposure function
+        Kicks off the auto focus.
+        Captures the esposure start time
+        Sets the exposure finish time
+        Opens the shutter. The main loop cheks for end of ezposure and closes the shutter.
+        */
         Serial.println("Set Exposure time in seconds.") ; 
         camera_exposure = serial_get_int();
-        Serial.print ("seconds of Exposture = ");
-        Serial.println (camera_exposure);
-
+        Serial.print ("seconds of Exposure = ");
+        Serial.println (camera_exposure);      
         break;
-
-
 
         case 'a':
         case 'A':
@@ -210,10 +254,19 @@ void  loop()  {
         digitalWrite(nFOCUS, LOW);
         delay(FOCUS_DELAY);
         pinMode(nFOCUS, INPUT);    //Make high impedance.
-        // Release shutter
+
+/*        // Release shutter
         digitalWrite(nSHUTTER, LOW);
         delay(10);
         pinMode(nSHUTTER, INPUT);  //Makd high impedance.
+*/
+        exposure_finish_time = (millis() + 1000*camera_exposure);
+        if (VERBOSE)  Serial.print ("Exposing now at:");
+        if (VERBOSE)  Serial.print (millis());
+        if (VERBOSE)  Serial.print (". Finish will be time: ");
+        if (VERBOSE)  Serial.println (exposure_finish_time);
+        digitalWrite(nSHUTTER,LOW); // Open shutter
+        exposing = 1;  //Set the state variable.
         break;
 
         case 'i':
@@ -244,21 +297,39 @@ void  loop()  {
 
        default:
         Serial.println("Sorry, you did not pressed a command I know.");    
-        Serial.print("You pressed a(n)--");    
+        Serial.print("You pressed a(n)-- ");    
         Serial.print(char(inByte));    
-        Serial.println("--.");    
+        Serial.println(" --.");    
 
       }
   }
-}  //End of loop()
+}  //End of MAIN loop()
 
 //Functions go here.
+
+/* go() is the function which advances the motor and makes photos.
+The stop() function stops, actualy pauses, the go() state.
+The home() command will take the trolly back to the starting point limited by a limit switch.
+
+At start: 
+  Capture start time.
+  While length travled is < length to travel
+  Kick off focuse. Blocks a short time.
+  Then open the shutter for the exposure time. The open shutter function will block.
+  
+
+
+*/
+void go()  {
+  Serial.print("Going function does nothing.");
+}
 
 //Motor turn and go back.
 // MAX_REVOLUSTIONS takes us from one end to the other.
 // MAX_STEPS takes us from one end to the other.
 // A place holder for a real GO! function.
-void go()  {
+//void go()  {
+void wave()  {
   if (advance) {
     Serial.println("counter clockwise");
   }  else Serial.println("clockwise");
@@ -280,7 +351,8 @@ void commandmenu()  {
   Serial.println("\fRailduino Command Menu") ;
   Serial.println("F for Forward."); 
   Serial.println("R for Reverse."); 
-  Serial.println("B for Bump motor a step."); 
+  Serial.println("W for Wave motor forward and back."); 
+  Serial.println("R for Reverse."); 
   Serial.println("H for Home the trolly."); 
   Serial.println("G for motor and photos Go."); 
   Serial.println("S for motor and photos Stop."); 
