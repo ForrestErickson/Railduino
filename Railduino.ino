@@ -60,10 +60,11 @@ int  length_percent = 10;  //Percent of the total rail length to travel.
 //Camera Default Setup
 int camera_delay_interval = 5;  //Seconds between closing of shutter and next camera shot.
 int  camera_exposure = 3;  //Seconds of exposure
-int  number_photos = 1;  //Default number of photos.
+int  number_photos = 0;  //Default number of photos.
 long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills.
 long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
-int  exposing  = 0;  //Nonzero for exposing.
+boolean  exposing  = 0;  //Boolian, Nonzero for exposing (shutter is open).
+boolean  going = 0;  //Boolian, Nonzero for going to make photos.
 
 // initialize the stepper library on pins 8 through 11:
 Stepper myStepper(stepsPerRevolution, 8,11,12,13);           
@@ -116,35 +117,46 @@ void  loop()  {
     lastchange = millis();
   }
 
-//Check to stop exposing. 
+/*Manage N photos. 
+Aserts auto focus for a time, TBD before the shutter is released.
+Shuter released and held for the exposure time.
+Count down the number of phtos untill all are taken.
+*/
+
   if (exposing)  {
     if (exposure_finish_time < millis())  {
       // close shutter, ?set state variable?
       digitalWrite(nSHUTTER,HIGH); // 
+      exposing = 0;  //Stop exposing.
       number_photos = number_photos -1;  //Decrement number of photo remaining.
       if (number_photos < 1)  {
-        exposing = 0;  //Clear the state variable.        
+        nogo();   //Stop advancing.
+        going = 0;  //Set state variagble too.
+        if (VERBOSE)  Serial.print("Done with this run at: ");
       }
       if (VERBOSE)  Serial.print("Shutter closed at: ");
       if (VERBOSE)  Serial.println(exposure_finish_time);
       //Next esposure starts at camera_delay_interval + exposure_finish_time
-      next_exposure_starts = camera_delay_interval + exposure_finish_time;
+      next_exposure_starts = (camera_delay_interval*1000) + exposure_finish_time;
       Serial.print("Number of photos remaining: ");
       Serial.println(number_photos);
-      if (VERBOSE)  Serial.print("Next exposure at: ");
-      if (VERBOSE)  Serial.println(next_exposure_starts);            
+      if (VERBOSE && (number_photos > 0))  Serial.print("Next exposure at: ");
+      if (VERBOSE && (number_photos > 0))  Serial.println(next_exposure_starts);            
     }
-    if ((number_photos >0) && (next_exposure_starts > millis()))  {
-      // Set new esposure finish time and Open shutter shutter, 
-      exposure_finish_time = (millis() + 1000*camera_exposure);
-      if (VERBOSE)  Serial.print ("Exposing now at:");
-      if (VERBOSE)  Serial.print (millis());
-      if (VERBOSE)  Serial.print (". Finish will be time: ");
-      if (VERBOSE)  Serial.println (exposure_finish_time);
-      digitalWrite(nSHUTTER,LOW); // Open shutter
-      exposing = 1;  //Set the state variable.
-    }
-      
+  }
+    
+//If not exposing, wait untill the next exposure is to start, Then do it!
+  if ((exposing != 1) && (going == 1)){
+      if ((number_photos >0) && (next_exposure_starts < millis()))  {
+        // Set new esposure finish time and Open shutter shutter, 
+        exposure_finish_time = (millis() + 1000*camera_exposure);
+        if (VERBOSE)  Serial.print ("Exposing now at:");
+        if (VERBOSE)  Serial.print (millis());
+        if (VERBOSE)  Serial.print (". Finish will be time: ");
+        if (VERBOSE)  Serial.println (exposure_finish_time);
+        digitalWrite(nSHUTTER,LOW); // Open shutter
+        exposing = 1;  //Set the state variable.
+      }    
   }
   
   
@@ -198,6 +210,9 @@ void  loop()  {
         case 's':
         case 'S':
         Serial.println("This does nothing yet. Should be: Motor is Stopped.") ;   
+        going = 0;  // Stop Rail.
+        exposing = 0;  //Stop Camera.
+        Serial.println("Going!");
         break;
         
         case 't':
@@ -321,7 +336,15 @@ At start:
 
 */
 void go()  {
-  Serial.print("Going function does nothing.");
+  going = 1;  // Rail is going.
+  exposing = 1;  //Camera is going.
+  Serial.println("Going!");
+}
+
+void nogo()  {
+  going = 0;  // Rail is stopped.
+  exposing = 0;  //Camera is stopped.
+  Serial.println("Stopping!");
 }
 
 //Motor turn and go back.
