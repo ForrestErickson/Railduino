@@ -38,6 +38,8 @@ Pin assignments
 
 //Constants
 const  int LED = 13;  // Pin assignement. The Arduino LED.  Also LED IN4 on the motor shield.
+//const  int LED = 13;  // LED on the motor end.
+//const  int LED_FAR = 13;  // LED on the far end.
 const  int nFOCUS = 6;  // Pin assignment. Make low to trigger auto focus.
 const  int nSHUTTER = 7;  // Pin assignment. Make low to trigger open shutter.
 
@@ -123,31 +125,40 @@ Shuter released and held for the exposure time.
 Count down the number of phtos untill all are taken.
 */
 
+// If exposing and we reach the time to finish close the shutter.  Check if this is the last one.
   if (exposing)  {
     if (exposure_finish_time < millis())  {
       // close shutter, ?set state variable?
-      digitalWrite(nSHUTTER,HIGH); // 
+      pinMode(nSHUTTER,INPUT); // Make high impedianc to stop photo.
       exposing = 0;  //Stop exposing.
       number_photos = number_photos -1;  //Decrement number of photo remaining.
       if (number_photos < 1)  {
         nogo();   //Stop advancing.
         going = 0;  //Set state variagble too.
         if (VERBOSE)  Serial.print("Done with this run at: ");
+        if (VERBOSE)  Serial.println(exposure_finish_time);
       }
       if (VERBOSE)  Serial.print("Shutter closed at: ");
       if (VERBOSE)  Serial.println(exposure_finish_time);
       //Next esposure starts at camera_delay_interval + exposure_finish_time
-      next_exposure_starts = (camera_delay_interval*1000) + exposure_finish_time;
+      next_exposure_starts = (camera_delay_interval*1000) + exposure_finish_time - FOCUS_DELAY;
       Serial.print("Number of photos remaining: ");
       Serial.println(number_photos);
       if (VERBOSE && (number_photos > 0))  Serial.print("Next exposure at: ");
-      if (VERBOSE && (number_photos > 0))  Serial.println(next_exposure_starts);            
+      if (VERBOSE && (number_photos > 0))  Serial.println(next_exposure_starts);    
+      //We can start advancing the motor now. Set for TBD steps.
     }
   }
     
 //If not exposing, wait untill the next exposure is to start, Then do it!
   if ((exposing != 1) && (going == 1)){
       if ((number_photos >0) && (next_exposure_starts < millis()))  {
+        // Trigger auto focus before photo
+        digitalWrite(nFOCUS, LOW);
+        Serial.print("Focusing! ");
+        delay(FOCUS_DELAY);
+        pinMode(nFOCUS, INPUT);    //Make high impedance.
+
         // Set new esposure finish time and Open shutter shutter, 
         exposure_finish_time = (millis() + 1000*camera_exposure);
         if (VERBOSE)  Serial.print ("Exposing now at:");
@@ -156,7 +167,14 @@ Count down the number of phtos untill all are taken.
         if (VERBOSE)  Serial.println (exposure_finish_time);
         digitalWrite(nSHUTTER,LOW); // Open shutter
         exposing = 1;  //Set the state variable.
-      }    
+      }
+      else  {
+        //Here is where we can step the rail.
+        if (VERBOSE)  Serial.print ("|");
+        delay(5);
+        myStepper.step(advance*1);  //One step advance
+      }
+      
   }
   
   
@@ -202,17 +220,16 @@ Count down the number of phtos untill all are taken.
         
         case 'g':
         case 'G':
-        Serial.println("Motor is Go!") ;   
         go();
-        Serial.println("Motor is now stoped.") ;   
+//        Serial.println("Motor is now stoped.") ;   
         break;
         
         case 's':
         case 'S':
-        Serial.println("This does nothing yet. Should be: Motor is Stopped.") ;   
+//        Serial.println("This does nothing yet. Should be: Motor is Stopped.") ;   
         going = 0;  // Stop Rail.
         exposing = 0;  //Stop Camera.
-        Serial.println("Going!");
+        Serial.println("Stopped / Paused.");
         break;
         
         case 't':
@@ -336,8 +353,15 @@ At start:
 
 */
 void go()  {
+  Serial.println("Motor is Go!") ;   
+  Serial.print("We have ");
+  Serial.print(number_photos);
+  Serial.println(" remaining exposures to make.");
+  Serial.print("We have exposure time of ");
+  Serial.print(camera_exposure);
+  Serial.println(" seconds.");
   going = 1;  // Rail is going.
-  exposing = 1;  //Camera is going.
+//  exposing = 1;  //Camera is going.
   Serial.println("Going!");
 }
 
