@@ -62,7 +62,7 @@ int  length_percent = 10;  //Percent of the total rail length to travel.
 //Camera Default Setup
 int camera_delay_interval = 5;  //Seconds between closing of shutter and next camera shot.
 int  camera_exposure = 3;  //Seconds of exposure
-int  number_photos = 0;  //Default number of photos.
+int  number_photos = 1;  //Default number of photos.
 long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills.
 long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
 boolean  exposing  = 0;  //Boolian, Nonzero for exposing (shutter is open).
@@ -107,6 +107,8 @@ void  setup()  {
   
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
+
+  report_setup();
   }
 
 /* ------------------------  MAIN Loop -------------------------------------*/
@@ -221,7 +223,6 @@ Count down the number of phtos untill all are taken.
         case 'g':
         case 'G':
         go();
-//        Serial.println("Motor is now stoped.") ;   
         break;
         
         case 's':
@@ -267,8 +268,7 @@ Count down the number of phtos untill all are taken.
         */
         Serial.println("Set Exposure time in seconds.") ; 
         camera_exposure = serial_get_int();
-        Serial.print ("seconds of Exposure = ");
-        Serial.println (camera_exposure);      
+        report_setup(); 
         break;
 
         case 'a':
@@ -305,8 +305,7 @@ Count down the number of phtos untill all are taken.
         case 'I':
         Serial.println("Set up for photo interval.") ;   
         camera_delay_interval = serial_get_int ();
-        Serial.print ("seconds of camera delay Interval = ");
-        Serial.println (camera_delay_interval);
+        report_setup(); 
         break;
 
         case 'n':
@@ -314,14 +313,14 @@ Count down the number of phtos untill all are taken.
         Serial.println("Set for number of photos to make < 3000.") ; 
 //        number_photos = get_number();
         number_photos = serial_get_int();
-        Serial.print ("Number of photos = ");
-        Serial.println (number_photos);
+        report_setup(); 
         break;
 
         case 'm':  //M or m or NL prints menu.
         case 'M':
         case '\n':
         commandmenu();  
+        report_setup(); 
         break;
 
         case '\r':  //Swallow CR.
@@ -353,25 +352,34 @@ At start:
 
 */
 void go()  {
-  Serial.println("Motor is Go!") ;   
-  Serial.print("We have ");
-  Serial.print(number_photos);
-  Serial.println(" remaining exposures to make.");
-  Serial.print("We have exposure time of ");
-  Serial.print(camera_exposure);
-  Serial.println(" seconds.");
-  Serial.print("We have exposure delay interval time of ");
-  Serial.print(camera_delay_interval);
-  Serial.println(" seconds.");
-  if (number_photos >0) going = 1;  // Rail is going.
-//  exposing = 1;  //Camera is going.
-  Serial.println("Going!");
-}
+//  report_setup();
+  if (number_photos >0) {
+    going = 1;  // Rail is going.
+    Serial.println("Going!");
+  }
+  else {
+  Serial.println("Going ignored! N < 1.");
+  }
+}  //end of go()
 
 void nogo()  {
   going = 0;  // Rail is stopped.
   exposing = 0;  //Camera is stopped.
   Serial.println("Stopping!");
+}
+
+/*Report the setup variables */
+void report_setup()  {
+  Serial.println("SYSTEM SETUP:");
+  Serial.print("\tWe have N = ");
+  Serial.print(number_photos);
+  Serial.println(" remaining exposures to make.");
+  Serial.print("\tWe have Exposure time of E = ");
+  Serial.print(camera_exposure);
+  Serial.println(" seconds.");
+  Serial.print("\tWe have exposure delay Interval time of I = ");
+  Serial.print(camera_delay_interval);
+  Serial.println(" seconds.");
 }
 
 //Motor turn and go back.
@@ -413,6 +421,7 @@ void commandmenu()  {
   Serial.println("P to make Photo now!"); 
   Serial.println("I to set photo Interval."); 
   Serial.println("N to set Number of photos during rail travel."); 
+  Serial.println("M to refresh the Menu."); 
   Serial.println(""); //Leave space after manu.
   }  
 
