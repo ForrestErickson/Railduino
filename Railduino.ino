@@ -360,7 +360,10 @@ void go()  {
   Serial.print("We have exposure time of ");
   Serial.print(camera_exposure);
   Serial.println(" seconds.");
-  going = 1;  // Rail is going.
+  Serial.print("We have exposure delay interval time of ");
+  Serial.print(camera_delay_interval);
+  Serial.println(" seconds.");
+  if (number_photos >0) going = 1;  // Rail is going.
 //  exposing = 1;  //Camera is going.
   Serial.println("Going!");
 }
