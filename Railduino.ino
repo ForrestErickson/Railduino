@@ -1,8 +1,8 @@
 /*Railduino
   Forrest Erickson
   Created Nov 16, 2013.
-  Arduino controling a steper moter driging a linear rail camera mount.
-  Camera control during rail movement
+  Arduino controling a steper moter driving a linear rail camera mount.
+  Camera control during rail movement for Auto Focus and Camera exposure.
 
   Motor control with SEEED Studio motor sheild.
   Motor example AIRPAX A82743-M4 with 7.5 step angle.
@@ -45,7 +45,8 @@ const  int nSHUTTER = 7;  // Pin assignment. Make low to trigger open shutter.
 
 const  int VERBOSE = 1; //User VEBRBOSE for development
 const  int  HEARTBEAT = 1000;  //Period of heart beat in milliseconds used for LED.
-const  int  FOCUS_DELAY = 10;  //mSec delay from focust to shutter release.
+//const  int  FOCUS_DELAY = 10;  //mSec delay from focust to shutter release.
+const  int  FOCUS_DELAY = 500;  //mSec delay from focust to shutter release.
 
 //Motor Setup
 //const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
@@ -85,8 +86,13 @@ void  setup()  {
   digitalWrite(LED,HIGH);
   delay(50);
   toggleLED();
-  pinMode(nFOCUS, INPUT);  //Set as input so high impedance.
-  pinMode(nSHUTTER, INPUT); // Set as input so high impedance.
+  
+  //The focus and shutter will be an open drain to mimic a switch to ground.
+  pinMode(nFOCUS, INPUT);  //Set as input for high impedance.
+  pinMode(nSHUTTER, INPUT); // Set as input for high impedance.
+  digitalWrite(nFOCUS, LOW);  // Set for pin low to sink current when low impedance.
+  digitalWrite(nSHUTTER, LOW);
+
   delay(50);
   toggleLED();
 
@@ -131,7 +137,7 @@ Count down the number of phtos untill all are taken.
   if (exposing)  {
     if (exposure_finish_time < millis())  {
       // close shutter, ?set state variable?
-      pinMode(nSHUTTER,INPUT); // Make high impedianc to stop photo.
+      pinMode(nSHUTTER,INPUT); // Make high impediance to stop photo.
       exposing = 0;  //Stop exposing.
       number_photos = number_photos -1;  //Decrement number of photo remaining.
       if (number_photos < 1)  {
@@ -156,7 +162,7 @@ Count down the number of phtos untill all are taken.
   if ((exposing != 1) && (going == 1)){
       if ((number_photos >0) && (next_exposure_starts < millis()))  {
         // Trigger auto focus before photo
-        digitalWrite(nFOCUS, LOW);
+        pinMode(nFOCUS, OUTPUT);  // Make low impedance
         Serial.print("Focusing! ");
         delay(FOCUS_DELAY);
         pinMode(nFOCUS, INPUT);    //Make high impedance.
@@ -167,7 +173,7 @@ Count down the number of phtos untill all are taken.
         if (VERBOSE)  Serial.print (millis());
         if (VERBOSE)  Serial.print (". Finish will be time: ");
         if (VERBOSE)  Serial.println (exposure_finish_time);
-        digitalWrite(nSHUTTER,LOW); // Open shutter
+        pinMode(nSHUTTER,OUTPUT); // Open shutter
         exposing = 1;  //Set the state variable.
       }
       else  {
@@ -274,8 +280,8 @@ Count down the number of phtos untill all are taken.
         case 'a':
         case 'A':
         Serial.println("Trigger camera Auto focus.") ; 
-        digitalWrite(nFOCUS, LOW);
-        delay(10);
+        pinMode(nFOCUS, OUTPUT);
+        delay(FOCUS_DELAY);
         pinMode(nFOCUS, INPUT);
         break;
 
@@ -283,7 +289,7 @@ Count down the number of phtos untill all are taken.
         case 'P':
         Serial.println("Make Photo now.") ;   
         // Trigger auto focus
-        digitalWrite(nFOCUS, LOW);
+        pinMode(nFOCUS, OUTPUT);
         delay(FOCUS_DELAY);
         pinMode(nFOCUS, INPUT);    //Make high impedance.
 
@@ -297,7 +303,7 @@ Count down the number of phtos untill all are taken.
         if (VERBOSE)  Serial.print (millis());
         if (VERBOSE)  Serial.print (". Finish will be time: ");
         if (VERBOSE)  Serial.println (exposure_finish_time);
-        digitalWrite(nSHUTTER,LOW); // Open shutter
+        pinMode(nSHUTTER,OUTPUT); // Open shutter
         exposing = 1;  //Set the state variable.
         break;
 
