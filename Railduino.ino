@@ -64,8 +64,8 @@ int  length_percent = 10;  //Percent of the total rail length to travel.
 int camera_delay_interval = 5;  //Seconds between closing of shutter and next camera shot.
 int  camera_exposure = 3;  //Seconds of exposure
 int  number_photos = 1;  //Default number of photos.
-long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills.
-long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
+unsigned long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills. Can count for 49 days.
+unsigned long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
 boolean  exposing  = 0;  //Boolian, Nonzero for exposing (shutter is open).
 boolean  going = 0;  //Boolian, Nonzero for going to make photos.
 
@@ -353,9 +353,6 @@ At start:
   While length travled is < length to travel
   Kick off focuse. Blocks a short time.
   Then open the shutter for the exposure time. The open shutter function will block.
-  
-
-
 */
 void go()  {
 //  report_setup();
@@ -388,27 +385,21 @@ void report_setup()  {
   Serial.println(" seconds.");
 }
 
-//Motor turn and go back.
-// MAX_REVOLUSTIONS takes us from one end to the other.
-// MAX_STEPS takes us from one end to the other.
-// A place holder for a real GO! function.
-//void go()  {
+//Motor turn to and fro for show and tell.
 void wave()  {
-  if (advance) {
-    Serial.println("counter clockwise");
-  }  else Serial.println("clockwise");
- 
-  myStepper.step(advance*MAX_STEPS*(length_percent/100.0));
+  Serial.println("I say, Hello!");
+  myStepper.step(advance*MAX_STEPS*0.5*(length_percent/100.0));
   toggleLED();
   delay(500);
-  if (advance) {
-    Serial.println("clockwise");
-  }  else Serial.println("counter clockwise");
+  Serial.println("Good day to you!");
   myStepper.step(-1*advance*MAX_STEPS*(length_percent/100.0));
   delay(500);
+  Serial.println("Good show!");
+  myStepper.step(advance*MAX_STEPS*0.5*(length_percent/100.0));
+  toggleLED();
+  delay(500);
+  Serial.println("Tooda Loo!");
 }
-
-
 
 //Command menu for Railduino
 void commandmenu()  {
