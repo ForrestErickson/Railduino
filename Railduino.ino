@@ -37,6 +37,7 @@ Pin assignments
 #include <stdlib.h>  //Allows atoi ASCII to Interger
 
 //Constants
+const char VERSION[] ="20131205";  //VERSION is printed at start up.
 const  int LED = 13;  // Pin assignement. The Arduino LED.  Also LED IN4 on the motor shield.
 //const  int LED = 13;  // LED on the motor end.
 //const  int LED_FAR = 13;  // LED on the far end.
@@ -55,10 +56,12 @@ const int stepsPerRevolution = int(360/1.5);  // Big Inch degree / step motor.
 
 //Rail Setup
 const int  THREADS_PER_INCH = 20;  //on 1/4x20 all thread.
-const int  LENGTH_OF_TRAVEL = 1; //Inches 
-const int  MAX_REVOLUSTIONS = LENGTH_OF_TRAVEL * THREADS_PER_INCH;
-const int  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
-int  length_percent = 10;  //Percent of the total rail length to travel.
+const int  LENGTH_OF_TRAVEL = 5*12; //Inches 
+//const int  MAX_REVOLUSTIONS = LENGTH_OF_TRAVEL * THREADS_PER_INCH;
+//const int  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
+const long  MAX_REVOLUSTIONS = LENGTH_OF_TRAVEL * THREADS_PER_INCH;
+const long  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
+int  length_percent = 1;  //Percent of the total rail length to travel.
 
 //Camera Default Setup
 int camera_delay_interval = 5;  //Seconds between closing of shutter and next camera shot.
@@ -106,10 +109,14 @@ void  setup()  {
   toggleLED();
 
   Serial.begin(9600);
-  if (VERBOSE)  {Serial.println("\r\n\fRailduino Version 20131125. Setup Done");  }
+  if (VERBOSE)  {Serial.print("\r\n\fRailduino Version ");  }
+  if (VERBOSE)  {Serial.println(VERSION);  }
+  if (VERBOSE)  {Serial.print("Setup Done.\n\rMax Steps = ");  }
   //  Serial.println (MAX_STEPS);
   delay(50);
   toggleLED();
+  if (VERBOSE)  {Serial.println(MAX_STEPS);  }
+  
   
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
