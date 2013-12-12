@@ -6,6 +6,7 @@
 
   Motor control with SEEED Studio motor sheild.
   Motor example AIRPAX A82743-M4 with 7.5 step angle.
+  Motor during bench Development BigInch with 1.5 step angle.
   
   Schematic: 
   Drawings: 
@@ -17,10 +18,10 @@ Pin assignments
   
   D0  RX
   D1  TX
-  D2  Int.0        NC
-  D3~ Int.1        NC
-  D4               NC
-  D5~              NC
+  D2  nNEAR_LIMIT  Near Limit Switch
+  D3~ Near_LED     RED LED on near end.
+  D4  nFAR_LIMIT   Far Limit Switch
+  D5~ Far_LED      RED LED on far end.
   D6~              /Focus    ?ring?
   D7               /Shutter  ?tip?
   D8               MOTOR CONTROL
@@ -33,14 +34,15 @@ Pin assignments
 
 
 #include <Stepper.h>
-#include <String.h>  //Allows sting comparison.
 #include <stdlib.h>  //Allows atoi ASCII to Interger
 
 //Constants
 const char VERSION[] ="20131205";  //VERSION is printed at start up.
 const  int LED = 13;  // Pin assignement. The Arduino LED.  Also LED IN4 on the motor shield.
-//const  int LED = 13;  // LED on the motor end.
-//const  int LED_FAR = 13;  // LED on the far end.
+const  int nNEAR_LIMIT = 2;  // Switch goes low when we reach far limit.
+const  int NEAR_LED = 3;  // LED on the motor end.
+const  int nFAR_LIMIT = 4;  // Switch goes low when we reach far limit.
+const  int FAR_LED = 5;  // LED on the far end.
 const  int nFOCUS = 6;  // Pin assignment. Make low to trigger auto focus.
 const  int nSHUTTER = 7;  // Pin assignment. Make low to trigger open shutter.
 
@@ -85,17 +87,24 @@ int advance = -1;  //Direction of stepper is counter clockwise to push trolly.
 
 //Initiliaze Hardware
 void  setup()  {
+  pinMode(NEAR_LED,OUTPUT);
+  pinMode(FAR_LED,OUTPUT);
   pinMode(LED, OUTPUT);
+  digitalWrite(NEAR_LED,HIGH);
+  digitalWrite(FAR_LED,HIGH);
   digitalWrite(LED,HIGH);
   delay(50);
   toggleLED();
+  
+  //Setup Limit switchers as input.
+  pinMode (nNEAR_LIMIT, INPUT);  //10K pull up. Switch closes at limit.
+  pinMode (nFAR_LIMIT, INPUT);  //10K pull up. Switch closes at limit.
   
   //The focus and shutter will be an open drain to mimic a switch to ground.
   pinMode(nFOCUS, INPUT);  //Set as input for high impedance.
   pinMode(nSHUTTER, INPUT); // Set as input for high impedance.
   digitalWrite(nFOCUS, LOW);  // Set for pin low to sink current when low impedance.
   digitalWrite(nSHUTTER, LOW);
-
   delay(50);
   toggleLED();
 
@@ -130,10 +139,14 @@ void  loop()  {
   //Heart Beat
   if (HEARTBEAT/2 < (millis()-lastchange)){
     toggleLED();
+//  if (VERBOSE)  {Serial.println("Toggle LED"); }
+
  //  if (VERBOSE)  {Serial.println("Toggle LED"); }
     lastchange = millis();
   }
 
+  get_switches();  //Check switch status.
+  
 /*Manage N photos. 
 Aserts auto focus for a time, TBD before the shutter is released.
 Shuter released and held for the exposure time.
@@ -431,13 +444,18 @@ void commandmenu()  {
 
 
 //Toggle the LED on pin 13 for user feedback.
+//For development toggle the near and far LEDs too.
 int valLED = LOW;  // variable to store LED state
 
 void toggleLED()  {
   if (valLED == HIGH){
+    digitalWrite(NEAR_LED, LOW);
+    digitalWrite(FAR_LED, LOW);
     digitalWrite(LED, LOW);
     valLED = LOW;
   } else {
+    digitalWrite(NEAR_LED, HIGH);
+    digitalWrite(FAR_LED, HIGH);
     digitalWrite(LED, HIGH);
     valLED = HIGH;
   }  
@@ -461,3 +479,25 @@ int serial_get_int ()
   } while ( (c != '\n') && (x <= 3000) ); // int in x.
   return (x);  // The number.
 }
+
+//Test state of limit switches.
+//If limit reached then stop motor by setting "number_photos" to 0.
+//Returns TRUE if limit reached.
+int limit_switch_reached = LOW;  // variable to store switch state
+
+void get_switches()  {
+//  if (  !digitalRead(nFAR_LIMIT) )  {
+  if (  !digitalRead(nFAR_LIMIT) && 0)  {
+    Serial.println("Far limit switch reached");  //D4 switch
+    going = 0;          //To stop further advance.
+    number_photos = 0;  //To stop further advance.
+  }
+  
+  if (  !digitalRead(nNEAR_LIMIT))  {
+    Serial.println("Near limit switch reached");  //D2 switch
+    going = 0;          //To stop further advance.
+    number_photos = 0;  //To stop further advance.
+  }
+
+}
+
