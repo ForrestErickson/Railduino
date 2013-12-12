@@ -449,10 +449,17 @@ int valLED = LOW;  // variable to store LED state
 
 void toggleLED()  {
   if (valLED == HIGH){
-    digitalWrite(NEAR_LED, LOW);
-    digitalWrite(FAR_LED, LOW);
+    if (going ==1)  {
+      if (advance == 1)  {
+        digitalWrite(FAR_LED, LOW);
+      }
+      else {
+        digitalWrite(NEAR_LED, LOW);
+      }
+    }
     digitalWrite(LED, LOW);
     valLED = LOW;
+    
   } else {
     digitalWrite(NEAR_LED, HIGH);
     digitalWrite(FAR_LED, HIGH);
@@ -481,22 +488,17 @@ int serial_get_int ()
 }
 
 //Test state of limit switches.
-//If limit reached then stop motor by setting "number_photos" to 0.
-//Returns TRUE if limit reached.
-int limit_switch_reached = LOW;  // variable to store switch state
-
+//If limit reached then reverse motor by setting "advance" to opposite
 void get_switches()  {
 //  if (  !digitalRead(nFAR_LIMIT) )  {
   if (  !digitalRead(nFAR_LIMIT) && 0)  {
     Serial.println("Far limit switch reached");  //D4 switch
-    going = 0;          //To stop further advance.
-    number_photos = 0;  //To stop further advance.
+    advance = -1;  //Time to go reverse again.
   }
   
   if (  !digitalRead(nNEAR_LIMIT))  {
     Serial.println("Near limit switch reached");  //D2 switch
-    going = 0;          //To stop further advance.
-    number_photos = 0;  //To stop further advance.
+    advance = 1;  //Time to go forward again.
   }
 
 }
