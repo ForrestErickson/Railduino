@@ -37,7 +37,7 @@ Pin assignments
 #include <stdlib.h>  //Allows atoi ASCII to Interger
 
 //Constants
-const char VERSION[] ="20131205";  //VERSION is printed at start up.
+const char VERSION[] ="20131212";  //VERSION is printed at start up.
 const  int LED = 13;  // Pin assignement. The Arduino LED.  Also LED IN4 on the motor shield.
 const  int nNEAR_LIMIT = 2;  // Switch goes low when we reach far limit.
 const  int NEAR_LED = 3;  // LED on the motor end.
@@ -48,8 +48,9 @@ const  int nSHUTTER = 7;  // Pin assignment. Make low to trigger open shutter.
 
 const  int VERBOSE = 1; //User VEBRBOSE for development
 const  int  HEARTBEAT = 1000;  //Period of heart beat in milliseconds used for LED.
-//const  int  FOCUS_DELAY = 10;  //mSec delay from focust to shutter release.
-const  int  FOCUS_DELAY = 500;  //mSec delay from focust to shutter release.
+//const  int  FOCUS_DELAY = 250;  //mSec delay from focust to shutter release. too short
+//750 ms missed some photos.
+const  int  FOCUS_DELAY = 1000;  //mSec delay from focust to shutter release.
 
 //Motor Setup
 //const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
@@ -109,7 +110,8 @@ void  setup()  {
   toggleLED();
 
  // set the speed in RMP and turn on pins to driver stepper shield.
-  myStepper.setSpeed(24);
+//  myStepper.setSpeed(24);
+  myStepper.setSpeed(50);
   pinMode(9,OUTPUT);
   pinMode(10,OUTPUT);
   digitalWrite(9,HIGH);
@@ -457,13 +459,13 @@ void toggleLED()  {
         digitalWrite(NEAR_LED, LOW);
       }
     }
-    digitalWrite(LED, LOW);
+//    digitalWrite(LED, LOW);  //LED on pin 13.
     valLED = LOW;
     
   } else {
     digitalWrite(NEAR_LED, HIGH);
     digitalWrite(FAR_LED, HIGH);
-    digitalWrite(LED, HIGH);
+//    digitalWrite(LED, HIGH);
     valLED = HIGH;
   }  
 }
@@ -490,8 +492,8 @@ int serial_get_int ()
 //Test state of limit switches.
 //If limit reached then reverse motor by setting "advance" to opposite
 void get_switches()  {
-//  if (  !digitalRead(nFAR_LIMIT) )  {
-  if (  !digitalRead(nFAR_LIMIT) && 0)  {
+  if (  !digitalRead(nFAR_LIMIT) )  {
+//  if (  !digitalRead(nFAR_LIMIT) && 0)  {
     Serial.println("Far limit switch reached");  //D4 switch
     advance = -1;  //Time to go reverse again.
   }
