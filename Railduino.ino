@@ -110,8 +110,9 @@ void  setup()  {
   toggleLED();
 
  // set the speed in RMP and turn on pins to driver stepper shield.
+  myStepper.setSpeed(15);  // Better power.
 //  myStepper.setSpeed(24);
-  myStepper.setSpeed(50);
+//  myStepper.setSpeed(50);  //Wimpy
   pinMode(9,OUTPUT);
   pinMode(10,OUTPUT);
   digitalWrite(9,HIGH);
@@ -184,10 +185,10 @@ Count down the number of phtos untill all are taken.
   if ((exposing != 1) && (going == 1)){
       if ((number_photos >0) && (next_exposure_starts < millis()))  {
         // Trigger auto focus before photo
-        pinMode(nFOCUS, OUTPUT);  // Make low impedance
-        Serial.print("Focusing! ");
-        delay(FOCUS_DELAY);
-        pinMode(nFOCUS, INPUT);    //Make high impedance.
+//        pinMode(nFOCUS, OUTPUT);  // Make low impedance
+//        Serial.print("Focusing! ");
+//        delay(FOCUS_DELAY);
+//        pinMode(nFOCUS, INPUT);    //Make high impedance.
 
         // Set new esposure finish time and Open shutter shutter, 
         exposure_finish_time = (millis() + 1000*camera_exposure);
