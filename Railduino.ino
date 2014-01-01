@@ -56,6 +56,8 @@ const  int  FOCUS_DELAY = 1000;  //mSec delay from focust to shutter release.
 //const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
 //const int stepsPerRevolution = int(360);  // Big Inch degree / step motor.
 const int stepsPerRevolution = int(360/1.5);  // Big Inch degree / step motor.
+int speed_motor = 10; //RPMs
+
 
 //Rail Setup
 const int  THREADS_PER_INCH = 20;  //on 1/4x20 all thread.
@@ -110,8 +112,8 @@ void  setup()  {
   toggleLED();
 
  // set the speed in RMP and turn on pins to driver stepper shield.
-  myStepper.setSpeed(15);  // Better power.
-//  myStepper.setSpeed(24);
+//  myStepper.setSpeed(10);  // Better power.  //  myStepper.setSpeed(15);  // Better power.
+  myStepper.setSpeed(speed_motor);
 //  myStepper.setSpeed(50);  //Wimpy
   pinMode(9,OUTPUT);
   pinMode(10,OUTPUT);
@@ -254,14 +256,20 @@ Count down the number of phtos untill all are taken.
         go();
         break;
         
-        case 's':
         case 'S':
+        Serial.println("Enter motor Speed.") ;   
+        speed_motor = serial_get_int();
+        myStepper.setSpeed(speed_motor);
+        report_setup(); 
+        break;
+        
+        case 's':
 //        Serial.println("This does nothing yet. Should be: Motor is Stopped.") ;   
         going = 0;  // Stop Rail.
         exposing = 0;  //Stop Camera.
         Serial.println("Stopped / Paused.");
         break;
-        
+         
         case 't':
         case 'T':
         Serial.println("This does nothing yet. Should be: Reports Time for rail travel.") ;   
@@ -406,6 +414,9 @@ void report_setup()  {
   Serial.print("\tWe have exposure delay Interval time of I = ");
   Serial.print(camera_delay_interval);
   Serial.println(" seconds.");
+   Serial.print("\tMotor speed is = ");
+  Serial.print(speed_motor);
+  Serial.println(" steps per second.");
 }
 
 //Motor turn to and fro for show and tell.
@@ -433,7 +444,8 @@ void commandmenu()  {
   Serial.println("R for Reverse."); 
   Serial.println("H for Home the trolly."); 
   Serial.println("G for motor and photos Go."); 
-  Serial.println("S for motor and photos Stop."); 
+  Serial.println("s for motor and photos sTOP."); 
+  Serial.println("S to set motor Speed."); 
   Serial.println("T to report Time to travel rail."); 
   Serial.println("L/l increment or decrement percent Length of rail to travel"); 
   Serial.println("E to set Exposure in seconds."); 
