@@ -53,15 +53,16 @@ const  int  HEARTBEAT = 1000;  //Period of heart beat in milliseconds used for L
 const  int  FOCUS_DELAY = 1000;  //mSec delay from focust to shutter release.
 
 //Motor Setup
-//const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
+const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
 //const int stepsPerRevolution = int(360);  // Big Inch degree / step motor.
-const int stepsPerRevolution = int(360/1.5);  // Big Inch degree / step motor.
-int speed_motor = 10; //RPMs
+//const int stepsPerRevolution = int(360/1.5);  // Big Inch degree / step motor.
+int speed_motor = 48; //steps per second
 
 
 //Rail Setup
-const int  THREADS_PER_INCH = 20;  //on 1/4x20 all thread.
-const int  LENGTH_OF_TRAVEL = 5*12; //Inches 
+//const int  THREADS_PER_INCH = 20;  //on 1/4x20 all thread.
+const int  THREADS_PER_INCH = 13;  //on 1/2x13 all thread.
+const int  LENGTH_OF_TRAVEL = 52; //Inches as measured Jan 3, 2014.
 //const int  MAX_REVOLUSTIONS = LENGTH_OF_TRAVEL * THREADS_PER_INCH;
 //const int  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
 const long  MAX_REVOLUSTIONS = LENGTH_OF_TRAVEL * THREADS_PER_INCH;
@@ -69,8 +70,8 @@ const long  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
 int  length_percent = 1;  //Percent of the total rail length to travel.
 
 //Camera Default Setup
-int camera_delay_interval = 5;  //Seconds between closing of shutter and next camera shot.
-int  camera_exposure = 3;  //Seconds of exposure
+long camera_delay_interval = 60;  //Seconds between closing of shutter and next camera shot.
+int  camera_exposure = 1;  //Seconds of exposure
 int  number_photos = 1;  //Default number of photos.
 unsigned long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills. Can count for 49 days.
 unsigned long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
@@ -79,7 +80,7 @@ boolean  going = 0;  //Boolian, Nonzero for going to make photos.
 
 // initialize the stepper library on pins 8 through 11:
 Stepper myStepper(stepsPerRevolution, 8,11,12,13);           
-int advance = -1;  //Direction of stepper is counter clockwise to push trolly.
+int advance = 1;  //Direction of stepper is counter clockwise to push trolly.
 
 // Set serial port variables.  
   String inputString = "";         // a string to hold incoming data
@@ -221,13 +222,13 @@ Count down the number of phtos untill all are taken.
 
         case 'f':
         case 'F':
-        advance = -1;
+        advance = 1;
         Serial.println("Set for Forward.") ;   
         break;
         
         case 'r':
         case 'R':
-        advance = 1;
+        advance = -1;
         Serial.println("Set for Reverse.") ;   
         break;
         
@@ -248,7 +249,7 @@ Count down the number of phtos untill all are taken.
         case 'h':
         case 'H':
         Serial.println("Heading for Home.") ;  
-        myStepper.step(1);  //TEMP One step back
+        myStepper.step(advance*-1);  //TEMP One step back
         break;
         
         case 'g':
@@ -259,6 +260,7 @@ Count down the number of phtos untill all are taken.
         case 'S':
         Serial.println("Enter motor Speed.") ;   
         speed_motor = serial_get_int();
+        if (speed_motor <1) speed_motor = 1;
         myStepper.setSpeed(speed_motor);
         report_setup(); 
         break;
