@@ -145,13 +145,10 @@ void  loop()  {
   //Heart Beat
   if (HEARTBEAT/2 < (millis()-lastchange)){
     toggleLED();
-//  if (VERBOSE)  {Serial.println("Toggle LED"); }
-
- //  if (VERBOSE)  {Serial.println("Toggle LED"); }
     lastchange = millis();
   }
 
-  get_switches();  //Check switch status.
+  get_switches();  //Check both switch status to see if limit is reached.
   
 /*Manage N photos. 
 Aserts auto focus for a time, TBD before the shutter is released.
@@ -182,7 +179,7 @@ Count down the number of phtos untill all are taken.
       if (VERBOSE && (number_photos > 0))  Serial.println(next_exposure_starts);    
       //We can start advancing the motor now. Set for TBD steps.
     }
-  }
+  }  //checking to close shutter.
     
 //If not exposing, wait untill the next exposure is to start, Then do it!
   if ((exposing != 1) && (going == 1)){
@@ -209,10 +206,10 @@ Count down the number of phtos untill all are taken.
         myStepper.step(advance*1);  //One step advance
       }
       
-  }
+  }  // Checking to open the shutter.
   
   
-  //User interface on serial port.
+  //Get User input. User interface on serial port.
   int  inByte;
 //  if (0) {
   if (Serial.available() >0) {
@@ -372,7 +369,7 @@ Count down the number of phtos untill all are taken.
         Serial.println(" --.");    
 
       }
-  }
+  }  //Get User input.
 }  //End of MAIN loop()
 
 //Functions go here.
@@ -385,7 +382,7 @@ At start:
   Capture start time.
   While length travled is < length to travel
   Kick off focuse. Blocks a short time.
-  Then open the shutter for the exposure time. The open shutter function will block.
+  Then open the shutter for the exposure time. The open shutter function no longer blocks.
 */
 void go()  {
 //  report_setup();
@@ -400,7 +397,7 @@ void go()  {
 
 void nogo()  {
   going = 0;  // Rail is stopped.
-  exposing = 0;  //Camera is stopped.
+  exposing = 0;  //Camera shutter closed.
   Serial.println("Stopping!");
 }
 
@@ -460,8 +457,9 @@ void commandmenu()  {
   }  
 
 
-//Toggle the LED on pin 13 for user feedback.
+//Toggle the LEDs on near and far end for user feedback.
 //For development toggle the near and far LEDs too.
+//When not advancing both LEDs are on.
 int valLED = LOW;  // variable to store LED state
 
 void toggleLED()  {
