@@ -77,8 +77,8 @@ int valAutoSwitch = 0;
 
 
 //Camera Default Setup
-long camera_delay_interval = 2;  //Seconds between closing of shutter and next camera shot.
-int  camera_exposure = 45;  //Seconds of exposure
+long camera_delay_interval = 2;  //Seconds of steper advancing. Seconds between closing of shutter and next camera shot.
+long  camera_exposure = 60;  //Seconds of exposure
 int  number_photos = 1;  //Default number of photos.
 unsigned long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills. Can count for 49 days.
 unsigned long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
@@ -228,7 +228,7 @@ Count down the number of phtos untill all are taken.
       else  {
         //Here is where we can step the rail.
         if (VERBOSE)  Serial.print ("|");
-        delay(5);
+//        delay(5);
         myStepper.step(advance*1);  //One step advance
       }
       
@@ -436,7 +436,7 @@ void report_setup()  {
   Serial.print("\tWe have Exposure time of E = ");
   Serial.print(camera_exposure);
   Serial.println(" seconds.");
-  Serial.print("\tWe have exposure delay Interval time of I = ");
+  Serial.print("\tWe have camera advance Interval time of I = ");
   Serial.print(camera_delay_interval);
   Serial.println(" seconds.");
    Serial.print("\tMotor speed is = ");
