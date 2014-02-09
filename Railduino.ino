@@ -14,7 +14,8 @@
 
 /*
 Pin assignments
-  A0 - A5          NC
+  A0               Auto / Serial Control  High if automatic advance.
+  A1 - A5          NC
   
   D0  RX
   D1  TX
@@ -37,7 +38,7 @@ Pin assignments
 #include <stdlib.h>  //Allows atoi ASCII to Interger
 
 //Constants
-const char VERSION[] ="20131212";  //VERSION is printed at start up.
+const char VERSION[] ="20140208";  //VERSION is printed at start up.
 const  int LED = 13;  // Pin assignement. The Arduino LED.  Also LED IN4 on the motor shield.
 const  int nNEAR_LIMIT = 2;  // Switch goes low when we reach far limit.
 const  int NEAR_LED = 3;  // LED on the motor end.
@@ -69,9 +70,14 @@ const long  MAX_REVOLUSTIONS = LENGTH_OF_TRAVEL * THREADS_PER_INCH;
 const long  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
 int  length_percent = 1;  //Percent of the total rail length to travel.
 
+//Auto Advance Swtich setup
+int AutoSwitch = 0;
+int valAutoSwitch = 0;
+
+
 //Camera Default Setup
-long camera_delay_interval = 60;  //Seconds between closing of shutter and next camera shot.
-int  camera_exposure = 1;  //Seconds of exposure
+long camera_delay_interval = 1;  //Seconds between closing of shutter and next camera shot.
+int  camera_exposure = 45;  //Seconds of exposure
 int  number_photos = 1;  //Default number of photos.
 unsigned long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills. Can count for 49 days.
 unsigned long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
@@ -134,7 +140,7 @@ void  setup()  {
   
   
   // reserve 200 bytes for the inputString:
-  inputString.reserve(200);
+//  inputString.reserve(200);
 
   report_setup();
   }
@@ -149,6 +155,14 @@ void  loop()  {
   }
 
   get_switches();  //Check both switch status to see if limit is reached.
+  
+//Read the auto advance switch
+  valAutoSwitch= analogRead(AutoSwitch);
+    if (valAutoSwitch > 512) {
+      number_photos = 2;
+      going = 1;  // Rail is going.
+//      exposing = 1;
+  } 
   
 /*Manage N photos. 
 Aserts auto focus for a time, TBD before the shutter is released.
