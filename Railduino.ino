@@ -72,11 +72,12 @@ int  length_percent = 1;  //Percent of the total rail length to travel.
 
 //Auto Advance Swtich setup
 int AutoSwitch = 0;
+int lastAutoSwitch = 0;
 int valAutoSwitch = 0;
 
 
 //Camera Default Setup
-long camera_delay_interval = 1;  //Seconds between closing of shutter and next camera shot.
+long camera_delay_interval = 2;  //Seconds between closing of shutter and next camera shot.
 int  camera_exposure = 45;  //Seconds of exposure
 int  number_photos = 1;  //Default number of photos.
 unsigned long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills. Can count for 49 days.
@@ -159,10 +160,21 @@ void  loop()  {
 //Read the auto advance switch
   valAutoSwitch= analogRead(AutoSwitch);
     if (valAutoSwitch > 512) {
-      number_photos = 2;
-      going = 1;  // Rail is going.
+      number_photos = 3;
+      if (lastAutoSwitch == LOW) {
+      delay(10);
+      lastAutoSwitch = HIGH;
+      go();
+//      going = 1;  // Rail is going.
 //      exposing = 1;
-  } 
+      }
+      } else {
+              if (lastAutoSwitch == HIGH) {
+                nogo();
+                number_photos =  0;                
+              }
+        lastAutoSwitch = LOW;
+      } 
   
 /*Manage N photos. 
 Aserts auto focus for a time, TBD before the shutter is released.
