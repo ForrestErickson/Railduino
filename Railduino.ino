@@ -544,3 +544,19 @@ void get_switches()  {
 
 }
 
+//Stepper Motor On and Off Functions
+void stepperon()
+{
+    digitalWrite(9,HIGH);  //Enable output bridge A
+  digitalWrite(10,HIGH);  //Enable output bridge B
+  delay(50);
+
+}
+void stepperoff()
+{
+    digitalWrite(9,LOW);  //Enable output bridge A
+  digitalWrite(10,LOW);  //Enable output bridge B
+  delay(50);
+
+}
+
