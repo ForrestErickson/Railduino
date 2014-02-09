@@ -125,8 +125,8 @@ void  setup()  {
 //  myStepper.setSpeed(50);  //Wimpy
   pinMode(9,OUTPUT);
   pinMode(10,OUTPUT);
-  digitalWrite(9,HIGH);
-  digitalWrite(10,HIGH);
+  digitalWrite(9,HIGH);  //Enable output bridge A
+  digitalWrite(10,HIGH);  //Enable output bridge B
   delay(50);
   toggleLED();
 
