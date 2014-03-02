@@ -1,22 +1,22 @@
 /*Railduino
   Forrest Erickson
   Created Nov 16, 2013.
-  Arduino controling a steper moter driving a linear rail camera mount.
+  Arduino controlling a stepper motor driving a linear rail camera mount.
   Camera control during rail movement for Auto Focus and Camera exposure.
 
-  Motor control with SEEED Studio motor sheild.
+  Motor control with SEEED Studio motor shield.
   Motor example AIRPAX A82743-M4 with 7.5 step angle.
   Motor during bench Development BigInch with 1.5 step angle.
-  
-  Schematic: 
-  Drawings: 
+ 
+  Schematic:
+  Drawings:
 */
 
 /*
 Pin assignments
   A0               Auto / Serial Control  High if automatic advance.
   A1 - A5          NC
-  
+ 
   D0  RX
   D1  TX
   D2  nNEAR_LIMIT  Near Limit Switch
@@ -35,11 +35,11 @@ Pin assignments
 
 
 #include <Stepper.h>
-#include <stdlib.h>  //Allows atoi ASCII to Interger
+#include <stdlib.h>  //Allows atoi ASCII to Integer
 
 //Constants
 const char VERSION[] ="20140208";  //VERSION is printed at start up.
-const  int LED = 13;  // Pin assignement. The Arduino LED.  Also LED IN4 on the motor shield.
+const  int LED = 13;  // Pin assignment. The Arduino LED.  Also LED IN4 on the motor shield.
 const  int nNEAR_LIMIT = 2;  // Switch goes low when we reach far limit.
 const  int NEAR_LED = 3;  // LED on the motor end.
 const  int nFAR_LIMIT = 4;  // Switch goes low when we reach far limit.
@@ -47,11 +47,11 @@ const  int FAR_LED = 5;  // LED on the far end.
 const  int nFOCUS = 6;  // Pin assignment. Make low to trigger auto focus.
 const  int nSHUTTER = 7;  // Pin assignment. Make low to trigger open shutter.
 
-const  int VERBOSE = 1; //User VEBRBOSE for development
+const  int VERBOSE = 1; //User VERBOSE for development
 const  int  HEARTBEAT = 1000;  //Period of heart beat in milliseconds used for LED.
-//const  int  FOCUS_DELAY = 250;  //mSec delay from focust to shutter release. too short
+//const  int  FOCUS_DELAY = 250;  //mSec delay from focus to shutter release. too short
 //750 ms missed some photos.
-const  int  FOCUS_DELAY = 1000;  //mSec delay from focust to shutter release.
+const  int  FOCUS_DELAY = 1000;  //mSec delay from focus to shutter release.
 
 //Motor Setup
 const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
@@ -70,20 +70,20 @@ const long  MAX_REVOLUSTIONS = LENGTH_OF_TRAVEL * THREADS_PER_INCH;
 const long  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
 int  length_percent = 1;  //Percent of the total rail length to travel.
 
-//Auto Advance Swtich setup
+//Auto Advance Switch setup
 int AutoSwitch = 0;
 int lastAutoSwitch = 0;
 int valAutoSwitch = 0;
 
 
 //Camera Default Setup
-long camera_delay_interval = 2;  //Seconds of steper advancing. Seconds between closing of shutter and next camera shot.
+long camera_delay_interval = 2;  //Seconds of stepper advancing. Seconds between closing of shutter and next camera shot.
 long  camera_exposure = 60;  //Seconds of exposure
 int  number_photos = 1;  //Default number of photos.
 unsigned long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills. Can count for 49 days.
 unsigned long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
-boolean  exposing  = 0;  //Boolian, Nonzero for exposing (shutter is open).
-boolean  going = 0;  //Boolian, Nonzero for going to make photos.
+boolean  exposing  = 0;  //Boolean, Nonzero for exposing (shutter is open).
+boolean  going = 0;  //Boolean, Nonzero for going to make photos.
 
 // initialize the stepper library on pins 8 through 11:
 Stepper myStepper(stepsPerRevolution, 8,11,12,13);           
@@ -96,7 +96,7 @@ int advance = 1;  //Direction of stepper is counter clockwise to push trolly.
   //unsigned long lastchange = millis();
   unsigned long lastchange = 0;  //Time since LED last changed.
 
-//Initiliaze Hardware
+//Initialize Hardware
 void  setup()  {
   pinMode(NEAR_LED,OUTPUT);
   pinMode(FAR_LED,OUTPUT);
@@ -106,11 +106,11 @@ void  setup()  {
   digitalWrite(LED,HIGH);
   delay(50);
   toggleLED();
-  
+ 
   //Setup Limit switchers as input.
   pinMode (nNEAR_LIMIT, INPUT);  //10K pull up. Switch closes at limit.
   pinMode (nFAR_LIMIT, INPUT);  //10K pull up. Switch closes at limit.
-  
+ 
   //The focus and shutter will be an open drain to mimic a switch to ground.
   pinMode(nFOCUS, INPUT);  //Set as input for high impedance.
   pinMode(nSHUTTER, INPUT); // Set as input for high impedance.
@@ -119,7 +119,7 @@ void  setup()  {
   delay(50);
   toggleLED();
 
- // set the speed in RMP and turn on pins to driver stepper shield.
+ // set the speed in RPM and turn on pins to driver stepper shield.
 //  myStepper.setSpeed(10);  // Better power.  //  myStepper.setSpeed(15);  // Better power.
   myStepper.setSpeed(speed_motor);
 //  myStepper.setSpeed(50);  //Wimpy
@@ -138,8 +138,8 @@ void  setup()  {
   delay(50);
   toggleLED();
   if (VERBOSE)  {Serial.println(MAX_STEPS);  }
-  
-  
+ 
+ 
   // reserve 200 bytes for the inputString:
 //  inputString.reserve(200);
 
@@ -156,7 +156,7 @@ void  loop()  {
   }
 
   get_switches();  //Check both switch status to see if limit is reached.
-  
+ 
 //Read the auto advance switch
   valAutoSwitch= analogRead(AutoSwitch);
     if (valAutoSwitch > 512) {
@@ -174,30 +174,30 @@ void  loop()  {
                 number_photos =  0;                
               }
         lastAutoSwitch = LOW;
-      } 
-  
-/*Manage N photos. 
-Aserts auto focus for a time, TBD before the shutter is released.
-Shuter released and held for the exposure time.
-Count down the number of phtos untill all are taken.
+      }
+ 
+/*Manage N photos.
+Asserts auto focus for a time, TBD before the shutter is released.
+Shutter released and held for the exposure time.
+Count down the number of photos until all are taken.
 */
 
 // If exposing and we reach the time to finish close the shutter.  Check if this is the last one.
   if (exposing)  {
     if (exposure_finish_time < millis())  {
       // close shutter, ?set state variable?
-      pinMode(nSHUTTER,INPUT); // Make high impediance to stop photo.
+      pinMode(nSHUTTER,INPUT); // Make high impedance to stop photo.
       exposing = 0;  //Stop exposing.
       number_photos = number_photos -1;  //Decrement number of photo remaining.
       if (number_photos < 1)  {
         nogo();   //Stop advancing.
-        going = 0;  //Set state variagble too.
+        going = 0;  //Set state variable too.
         if (VERBOSE)  Serial.print("Done with this run at: ");
         if (VERBOSE)  Serial.println(exposure_finish_time);
       }
       if (VERBOSE)  Serial.print("Shutter closed at: ");
       if (VERBOSE)  Serial.println(exposure_finish_time);
-      //Next esposure starts at camera_delay_interval + exposure_finish_time
+      //Next exposure starts at camera_delay_interval + exposure_finish_time
       next_exposure_starts = (camera_delay_interval*1000) + exposure_finish_time - FOCUS_DELAY;
       Serial.print("Number of photos remaining: ");
       Serial.println(number_photos);
@@ -207,7 +207,7 @@ Count down the number of phtos untill all are taken.
     }
   }  //checking to close shutter.
     
-//If not exposing, wait untill the next exposure is to start, Then do it!
+//If not exposing, wait until the next exposure is to start, Then do it!
   if ((exposing != 1) && (going == 1)){
       if ((number_photos >0) && (next_exposure_starts < millis()))  {
         // Trigger auto focus before photo
@@ -216,7 +216,7 @@ Count down the number of phtos untill all are taken.
 //        delay(FOCUS_DELAY);
 //        pinMode(nFOCUS, INPUT);    //Make high impedance.
 
-        // Set new esposure finish time and Open shutter shutter, 
+        // Set new exposure finish time and Open shutter shutter,
         exposure_finish_time = (millis() + 1000*camera_exposure);
         if (VERBOSE)  Serial.print ("Exposing now at:");
         if (VERBOSE)  Serial.print (millis());
@@ -233,8 +233,8 @@ Count down the number of phtos untill all are taken.
       }
       
   }  // Checking to open the shutter.
-  
-  
+ 
+ 
   //Get User input. User interface on serial port.
   int  inByte;
 //  if (0) {
@@ -258,8 +258,8 @@ Count down the number of phtos untill all are taken.
         case 'w':
         case 'W':
         Serial.println("Motor is Waving!") ;   
-        wave();  //The old go() function. Usefull for testing.
-        Serial.println("Waving has now stoped.") ;   
+        wave();  //The old go() function. Useful for testing.
+        Serial.println("Waving has now stopped.") ;   
         break;
  
         case 'b':
@@ -268,7 +268,7 @@ Count down the number of phtos untill all are taken.
         myStepper.step(advance*1);  //One step advance
         break;
         
-        //Home the trolly by returning untill limit switch closes.
+        //Home the trolly by returning until limit switch closes.
         case 'h':
         case 'H':
         Serial.println("Heading for Home.") ;  
@@ -285,7 +285,7 @@ Count down the number of phtos untill all are taken.
         speed_motor = serial_get_int();
         if (speed_motor <1) speed_motor = 1;
         myStepper.setSpeed(speed_motor);
-        report_setup(); 
+        report_setup();
         break;
         
         case 's':
@@ -324,18 +324,18 @@ Count down the number of phtos untill all are taken.
         case 'E':\
         /* NON Blocking exposure function
         Kicks off the auto focus.
-        Captures the esposure start time
+        Captures the exposure start time
         Sets the exposure finish time
-        Opens the shutter. The main loop cheks for end of ezposure and closes the shutter.
+        Opens the shutter. The main loop checks for end of exposure and closes the shutter.
         */
-        Serial.println("Set Exposure time in seconds.") ; 
+        Serial.println("Set Exposure time in seconds.") ;
         camera_exposure = serial_get_int();
-        report_setup(); 
+        report_setup();
         break;
 
         case 'a':
         case 'A':
-        Serial.println("Trigger camera Auto focus.") ; 
+        Serial.println("Trigger camera Auto focus.") ;
         pinMode(nFOCUS, OUTPUT);
         delay(FOCUS_DELAY);
         pinMode(nFOCUS, INPUT);
@@ -352,7 +352,7 @@ Count down the number of phtos untill all are taken.
 /*        // Release shutter
         digitalWrite(nSHUTTER, LOW);
         delay(10);
-        pinMode(nSHUTTER, INPUT);  //Makd high impedance.
+        pinMode(nSHUTTER, INPUT);  //Make high impedance.
 */
         exposure_finish_time = (millis() + 1000*camera_exposure);
         if (VERBOSE)  Serial.print ("Exposing now at:");
@@ -367,22 +367,22 @@ Count down the number of phtos untill all are taken.
         case 'I':
         Serial.println("Set up for photo interval.") ;   
         camera_delay_interval = serial_get_int ();
-        report_setup(); 
+        report_setup();
         break;
 
         case 'n':
         case 'N':
-        Serial.println("Set for number of photos to make < 3000.") ; 
+        Serial.println("Set for number of photos to make < 3000.") ;
 //        number_photos = get_number();
         number_photos = serial_get_int();
-        report_setup(); 
+        report_setup();
         break;
 
         case 'm':  //M or m or NL prints menu.
         case 'M':
         case '\n':
         commandmenu();  
-        report_setup(); 
+        report_setup();
         break;
 
         case '\r':  //Swallow CR.
@@ -401,13 +401,13 @@ Count down the number of phtos untill all are taken.
 //Functions go here.
 
 /* go() is the function which advances the motor and makes photos.
-The stop() function stops, actualy pauses, the go() state.
+The stop() function stops, actually pauses, the go() state.
 The home() command will take the trolly back to the starting point limited by a limit switch.
 
-At start: 
+At start:
   Capture start time.
-  While length travled is < length to travel
-  Kick off focuse. Blocks a short time.
+  While length traveled is < length to travel
+  Kick off focus. Blocks a short time.
   Then open the shutter for the exposure time. The open shutter function no longer blocks.
 */
 void go()  {
@@ -463,23 +463,23 @@ void wave()  {
 //Command menu for Railduino
 void commandmenu()  {
   Serial.println("\fRailduino Command Menu") ;
-  Serial.println("F for Forward."); 
-  Serial.println("R for Reverse."); 
-  Serial.println("W for Wave motor forward and back."); 
-  Serial.println("R for Reverse."); 
-  Serial.println("H for Home the trolly."); 
-  Serial.println("G for motor and photos Go."); 
-  Serial.println("s for motor and photos sTOP."); 
-  Serial.println("S to set motor Speed."); 
-  Serial.println("T to report Time to travel rail."); 
-  Serial.println("L/l increment or decrement percent Length of rail to travel"); 
-  Serial.println("E to set Exposure in seconds."); 
-  Serial.println("A to trigger Auto Focus on camera."); 
-  Serial.println("P to make Photo now!"); 
-  Serial.println("I to set photo Interval."); 
-  Serial.println("N to set Number of photos during rail travel."); 
-  Serial.println("M to refresh the Menu."); 
-  Serial.println(""); //Leave space after manu.
+  Serial.println("F for Forward.");
+  Serial.println("R for Reverse.");
+  Serial.println("W for Wave motor forward and back.");
+  Serial.println("R for Reverse.");
+  Serial.println("H for Home the trolly.");
+  Serial.println("G for motor and photos Go.");
+  Serial.println("s for motor and photos sTOP.");
+  Serial.println("S to set motor Speed.");
+  Serial.println("T to report Time to travel rail.");
+  Serial.println("L/l increment or decrement percent Length of rail to travel");
+  Serial.println("E to set Exposure in seconds.");
+  Serial.println("A to trigger Auto Focus on camera.");
+  Serial.println("P to make Photo now!");
+  Serial.println("I to set photo Interval.");
+  Serial.println("N to set Number of photos during rail travel.");
+  Serial.println("M to refresh the Menu.");
+  Serial.println(""); //Leave space after menu.
   }  
 
 
@@ -510,7 +510,7 @@ void toggleLED()  {
 }
 
 
-//Get digit characters and combine as positive interger.
+//Get digit characters and combine as positive integer.
 int serial_get_int ()  
 {
   char c = '0' ;
@@ -518,7 +518,7 @@ int serial_get_int ()
   do
   {
     if (Serial.available()>0)  {
-      c= Serial.read(); 
+      c= Serial.read();
       Serial.print (c);  //Echo to user's terminal.
       if ((c >= '0') && (c <= '9')) {
         x= 10*x + (c-'0');
@@ -536,7 +536,7 @@ void get_switches()  {
     Serial.println("Far limit switch reached");  //D4 switch
     advance = -1;  //Time to go reverse again.
   }
-  
+ 
   if (  !digitalRead(nNEAR_LIMIT))  {
     Serial.println("Near limit switch reached");  //D2 switch
     advance = 1;  //Time to go forward again.
