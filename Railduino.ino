@@ -180,6 +180,7 @@ void  loop()  {
       // close shutter, ?set state variable?
       pinMode(nSHUTTER,INPUT); // Make high impedance to stop photo.
       exposing = 0;  //Stop exposing.
+      stepperon();  //Turn motors back on.
       number_photos = number_photos -1;  //Decrement number of photo remaining.
       if (number_photos < 1)  {
         nogo();   //Stop advancing.
@@ -202,6 +203,7 @@ void  loop()  {
   //If not exposing, wait until the next exposure is to start, Then do it!
   if ((exposing != 1) && (going == 1)){
     if ((number_photos >0) && (next_exposure_starts < millis()))  {
+      stepperoff();  // Turn off the motor outputs to save battery
       // Trigger auto focus before photo
       //        pinMode(nFOCUS, OUTPUT);  // Make low impedance
       //        Serial.print("Focusing! ");
