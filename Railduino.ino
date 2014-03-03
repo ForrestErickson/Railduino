@@ -26,8 +26,8 @@ Pin assignments
  D6~              /Focus    ?ring?
  D7               /Shutter  ?tip?
  D8               MOTOR CONTROL
- D9~              NC
- D10~             NC
+ D9~              Output Enable Bridge A, M1
+ D10~             Output Enable Bridge B, M2
  D11~             MOTOR CONTROL
  D12              MOTOR CONTROL
  D13              MOTOR CONTROL
@@ -280,7 +280,6 @@ void  loop()  {
       break;
 
     case 's':
-      //        Serial.println("This does nothing yet. Should be: Motor is Stopped.") ;   
       going = 0;  // Stop Rail.
       exposing = 0;  //Stop Camera.
       Serial.println("Stopped / Paused.");

@@ -1,4 +1,5 @@
 //Motor turn to and fro for show and tell.
+//Caution this function blocks and does not test limit switches.
 void wave()  {
   Serial.println("I say, Hello!");
   myStepper.step(advance*MAX_STEPS*0.5*(length_percent/100.0));
