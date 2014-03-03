@@ -38,9 +38,8 @@ Pin assignments
 #include <stdlib.h>  //Allows atoi ASCII to Integer
 
 //Constants
-const char VERSION[] ="20140208";  //VERSION is printed at start up.
-const  int LED = 13;  // Pin assignment. The Arduino LED.  Also LED IN4 on the motor shield.
-const  int nNEAR_LIMIT = 2;  // Switch goes low when we reach far limit.
+const char VERSION[] ="20140302";  //VERSION is printed at start up.
+const  int nNEAR_LIMIT = 2;  // Switch goes low when we reach near limit.
 const  int NEAR_LED = 3;  // LED on the motor end.
 const  int nFAR_LIMIT = 4;  // Switch goes low when we reach far limit.
 const  int FAR_LED = 5;  // LED on the far end.
@@ -55,13 +54,11 @@ const  int  FOCUS_DELAY = 1000;  //mSec delay from focus to shutter release.
 
 //Motor Setup
 const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
-//const int stepsPerRevolution = int(360);  // Big Inch degree / step motor.
 //const int stepsPerRevolution = int(360/1.5);  // Big Inch degree / step motor.
 int speed_motor = 48; //steps per second
 
 
 //Rail Setup
-//const int  THREADS_PER_INCH = 20;  //on 1/4x20 all thread.
 const int  THREADS_PER_INCH = 13;  //on 1/2x13 all thread.
 const int  LENGTH_OF_TRAVEL = 52; //Inches as measured Jan 3, 2014.
 //const int  MAX_REVOLUSTIONS = LENGTH_OF_TRAVEL * THREADS_PER_INCH;
@@ -89,21 +86,14 @@ boolean  going = 0;  //Boolean, Nonzero for going to make photos.
 Stepper myStepper(stepsPerRevolution, 8,11,12,13);           
 int advance = 1;  //Direction of stepper is counter clockwise to push trolly.
 
-// Set serial port variables.  
-  String inputString = "";         // a string to hold incoming data
-  boolean stringComplete = false;  // whether the string is complete
-
-  //unsigned long lastchange = millis();
-  unsigned long lastchange = 0;  //Time since LED last changed.
+unsigned long lastchange = 0;  //Time since LED last changed.
 
 //Initialize Hardware
 void  setup()  {
   pinMode(NEAR_LED,OUTPUT);
   pinMode(FAR_LED,OUTPUT);
-  pinMode(LED, OUTPUT);
   digitalWrite(NEAR_LED,HIGH);
   digitalWrite(FAR_LED,HIGH);
-  digitalWrite(LED,HIGH);
   delay(50);
   toggleLED();
  
@@ -120,13 +110,11 @@ void  setup()  {
   toggleLED();
 
  // set the speed in RPM and turn on pins to driver stepper shield.
-//  myStepper.setSpeed(10);  // Better power.  //  myStepper.setSpeed(15);  // Better power.
   myStepper.setSpeed(speed_motor);
-//  myStepper.setSpeed(50);  //Wimpy
   pinMode(9,OUTPUT);
   pinMode(10,OUTPUT);
-  digitalWrite(9,HIGH);  //Enable output bridge A
-  digitalWrite(10,HIGH);  //Enable output bridge B
+  digitalWrite(9,HIGH);  //Enable output bridge A for M1
+  digitalWrite(10,HIGH);  //Enable output bridge B for M2
   delay(50);
   toggleLED();
 
@@ -137,16 +125,13 @@ void  setup()  {
   //  Serial.println (MAX_STEPS);
   delay(50);
   toggleLED();
-  if (VERBOSE)  {Serial.println(MAX_STEPS);  }
- 
- 
-  // reserve 200 bytes for the inputString:
-//  inputString.reserve(200);
 
   report_setup();
+  toggleLED();
   }
 
 /* ------------------------  MAIN Loop -------------------------------------*/
+//Use  non blocking or minimaly blocking methods in the loop().
 void  loop()  {
 
   //Heart Beat
