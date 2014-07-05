@@ -77,7 +77,7 @@ int valAutoSwitch = LOW;
 
 //Camera Default Setup
 long camera_delay_interval =2;  //Seconds of stepper advancing. Seconds between closing of shutter and next camera shot.
-long  camera_exposure = 3;  //Seconds of exposure
+long  camera_exposure = 30;  //Seconds of exposure
 int  number_photos = 1000;  //Default number of photos.
 unsigned long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills. Can count for 49 days.
 unsigned long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
@@ -159,6 +159,7 @@ void  loop()  {
     if (lastAutoSwitch == LOW) {
       delay(10);
       lastAutoSwitch = HIGH;
+      traversing = 0;  //Clear traversing of swtich set to auto.
       go();
       //      going = 1;  // Rail is going.
       //      exposing = 1;
