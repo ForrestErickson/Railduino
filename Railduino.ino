@@ -69,6 +69,7 @@ const long  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
 int  length_percent = 1;  //Percent of the total rail length to travel.
 
 //Auto Advance Switch setup
+const int AUTOSWITCHMID = 512;  //Switch is 10 bit A2D. 
 int AutoSwitch = LOW;
 int lastAutoSwitch = LOW;
 int valAutoSwitch = LOW;
@@ -80,8 +81,9 @@ long  camera_exposure = 3;  //Seconds of exposure
 int  number_photos = 1000;  //Default number of photos.
 unsigned long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills. Can count for 49 days.
 unsigned long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
-boolean  exposing  = 0;  //Boolean, Nonzero for exposing (shutter is open).
-boolean  going = 0;  //Boolean, Nonzero for going to make photos.
+boolean  exposing  = 0;  //Boolean state variable, Nonzero for exposing (shutter is open).
+boolean  traversing  = 0;  //Boolean state variable, Nonzero for normal advance. Set to 1 for going Home.
+boolean  going = 0;  //Boolean state variable, Nonzero for going to make photos.
 
 // initialize the stepper library on pins 8 through 11:
 Stepper myStepper(stepsPerRevolution, 8,11,12,13);           
@@ -119,8 +121,8 @@ void  setup()  {
   delay(50);
   toggleLED();
 
-  Serial.begin(38400);
-//  Serial.begin(19200);
+//  Serial.begin(38400);
+  Serial.begin(9600);
   if (VERBOSE)  {
     Serial.print("\r\n\fRailduino Version ");  
   }
@@ -152,7 +154,7 @@ void  loop()  {
 
   //Read the auto advance switch
   valAutoSwitch= analogRead(AutoSwitch);
-  if (valAutoSwitch > 512) {
+  if (valAutoSwitch > AUTOSWITCHMID) {
     number_photos = 2;  //Set for 2 bacause the next step decrements and we need at least one.
     if (lastAutoSwitch == LOW) {
       delay(10);
@@ -169,6 +171,14 @@ void  loop()  {
     }
     lastAutoSwitch = LOW;
   }
+
+//Traversing to home or far end.
+  if (traversing == 1)  {
+      stepperon();  //Turn motors back on.
+      myStepper.step(advance);  //One step advance
+  }
+
+
 
   /*Manage N photos.
    Asserts auto focus for a time, TBD before the shutter is released.
@@ -267,7 +277,13 @@ void  loop()  {
     case 'h':
     case 'H':
       Serial.println("Heading for Home.") ;  
-      myStepper.step(advance*-1);  //TEMP One step back
+      //Stop exposure. Close shutter, ?set state variable?
+      pinMode(nSHUTTER,INPUT); // Make high impedance to stop photo.
+      exposing = 0;  //Stop exposing.
+      
+      //Set direction to home, return to stepper moter end of rail.
+      traversing = 1;  //State is going fast to home.
+      advance = -1;
       break;
 
     case 'g':
@@ -286,6 +302,7 @@ void  loop()  {
     case 's':
       going = 0;  // Stop Rail.
       exposing = 0;  //Stop Camera.
+      traversing = 0;  //Stop going home or far.
       Serial.println("Stopped / Paused.");
       break;
 
@@ -407,6 +424,7 @@ void  loop()  {
 void go()  {
   //  report_setup();
   if (number_photos >0) {
+    stepperon();  //Turn motors back on.
     going = 1;  // Rail is going.
     Serial.println("Going!");
   }
@@ -418,6 +436,7 @@ void go()  {
 void nogo()  {
   going = 0;  // Rail is stopped.
   exposing = 0;  //Camera shutter closed.
+  stepperoff();  //Turn motors back off.
   Serial.println("Stopping!");
 }
 
