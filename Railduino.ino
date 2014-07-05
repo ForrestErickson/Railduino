@@ -300,6 +300,7 @@ void  loop()  {
       break;
 
     case 's':
+      stepperoff();  // Turn off the motor outputs to save battery
       going = 0;  // Stop Rail.
       exposing = 0;  //Stop Camera.
       traversing = 0;  //Stop going home or far.
