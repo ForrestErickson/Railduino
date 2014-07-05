@@ -55,7 +55,8 @@ const  int  FOCUS_DELAY = 1000;  //mSec delay from focus to shutter release.
 //Motor Setup
 const int stepsPerRevolution = int(360/7.5);  // For 7.5 AIRPAX degree / step motor.
 //const int stepsPerRevolution = int(360/1.5);  // Big Inch degree / step motor.
-int speed_motor = 48; //steps per second
+//int speed_motor = 48; //steps per second
+int speed_motor = 32; //steps per second
 
 
 //Rail Setup
@@ -68,15 +69,15 @@ const long  MAX_STEPS  = MAX_REVOLUSTIONS * stepsPerRevolution;
 int  length_percent = 1;  //Percent of the total rail length to travel.
 
 //Auto Advance Switch setup
-int AutoSwitch = 0;
-int lastAutoSwitch = 0;
-int valAutoSwitch = 0;
+int AutoSwitch = LOW;
+int lastAutoSwitch = LOW;
+int valAutoSwitch = LOW;
 
 
 //Camera Default Setup
-long camera_delay_interval = 2;  //Seconds of stepper advancing. Seconds between closing of shutter and next camera shot.
-long  camera_exposure = 60;  //Seconds of exposure
-int  number_photos = 1;  //Default number of photos.
+long camera_delay_interval =2;  //Seconds of stepper advancing. Seconds between closing of shutter and next camera shot.
+long  camera_exposure = 3;  //Seconds of exposure
+int  number_photos = 1000;  //Default number of photos.
 unsigned long  exposure_finish_time = 0;  // Used in main loop to stop exposures in mills. Can count for 49 days.
 unsigned long  next_exposure_starts = 0;  // Used in main loop to start next exposures in mills.
 boolean  exposing  = 0;  //Boolean, Nonzero for exposing (shutter is open).
@@ -118,7 +119,8 @@ void  setup()  {
   delay(50);
   toggleLED();
 
-  Serial.begin(9600);
+  Serial.begin(38400);
+//  Serial.begin(19200);
   if (VERBOSE)  {
     Serial.print("\r\n\fRailduino Version ");  
   }
@@ -151,7 +153,7 @@ void  loop()  {
   //Read the auto advance switch
   valAutoSwitch= analogRead(AutoSwitch);
   if (valAutoSwitch > 512) {
-    number_photos = 3;
+    number_photos = 2;  //Set for 2 bacause the next step decrements and we need at least one.
     if (lastAutoSwitch == LOW) {
       delay(10);
       lastAutoSwitch = HIGH;
@@ -221,7 +223,7 @@ void  loop()  {
     }
     else  {
       //Here is where we can step the rail.
-      if (VERBOSE)  Serial.print ("|");
+//      if (VERBOSE)  Serial.print ("|");
       //        delay(5);
       myStepper.step(advance*1);  //One step advance
     }
@@ -314,7 +316,6 @@ void  loop()  {
 
     case 'e':
     case 'E':
-      \
         /* NON Blocking exposure function
        Kicks off the auto focus.
        Captures the exposure start time
@@ -420,6 +421,25 @@ void nogo()  {
   Serial.println("Stopping!");
 }
 
+//Stepper Motor On and Off Functions
+//The delay is to allow the current to settle. This has not been measured.
+void stepperon()
+{
+    digitalWrite(9,HIGH);  //Enable output bridge A
+  digitalWrite(10,HIGH);  //Enable output bridge B
+  delay(50);
+
+}
+void stepperoff()
+{
+    digitalWrite(9,LOW);  //Enable output bridge A
+  digitalWrite(10,LOW);  //Enable output bridge B
+  delay(50);
+
+}
+
+//--------------------------End Motor control--------------------------------------
+
 //Get digit characters and combine as positive integer.
 int serial_get_int ()  
 {
@@ -437,22 +457,5 @@ int serial_get_int ()
   } 
   while ( (c != '\n') && (x <= 3000) ); // int in x.
   return (x);  // The number.
-}
-
-
-//Stepper Motor On and Off Functions
-void stepperon()
-{
-    digitalWrite(9,HIGH);  //Enable output bridge A
-  digitalWrite(10,HIGH);  //Enable output bridge B
-  delay(50);
-
-}
-void stepperoff()
-{
-    digitalWrite(9,LOW);  //Enable output bridge A
-  digitalWrite(10,LOW);  //Enable output bridge B
-  delay(50);
-
 }
 
